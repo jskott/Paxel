@@ -1,12 +1,19 @@
 Namn -> OGP: Name
-Flouro -> Flouro
-Punkt -> RAD_OGP : ID_Technique
-kV -> OGP: ID_kV
-mAs -> RAD_OGP: ID_mAs
-ms -> RAD_OGP: ID_ms
-Dos -> RAD_OGP: ID_Dose
-Fokus -> RAD: ID_Focus
-Cu -> OGP: ID_FilterType
-Amp -> RAD_OGP: ID_ImageAmplification
+Flouro -> OGP:ID_FPSet -> FPSet:Name
+Punkt -> RAD_OGP : ID_Technique -> Technique : Value
+kV -> OGP: ID_kV -> OGP_kV : Value
+mAs -> RAD_OGP: ID_mAs -> RADOGP_mAs : Value
+ms -> RAD_OGP: ID_ms -> RADOGP_mAs : Value
+Dos -> RAD_OGP: ID_Dose -> Dose_Rad: Dose
+Fokus -> RAD: ID_Focus -> Focus:Focus
+Cu -> OGP: ID_FilterType -> FilterType: Name
+Amp -> RAD_OGP: ID_ImageAmplification -> ImageAmplification:Value
 Amp auto -> RAD_OGP: ImageAutoamplification
 LUT -> RAD_OGP:ID_ImageGradation -> Gradation Parameter:Name
+SFP -> OGP:ID_ImaSpatialFreqParam -> SpatialFrequencyParameter:Name
+WC -> RAD_OGP:ImageWinCenter
+WW -> RAD_OGP:ImageWinWidth
+Auto -> RAD_OGP:ImageWinAutowindowing
+Raster -> OGP:Grid
+Höjd -> 
+Bredd -> 
