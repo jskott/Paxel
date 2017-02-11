@@ -1,0 +1,63 @@
+OGP
+	ID
+	Name
+	ID_FPSet
+	ID_kV
+	ID_Focus
+	ID_FilterType
+	ID_ImaSpatialFreqParam
+	Grid
+
+RAD_OGP
+	ID
+	ID_Technique
+	ID_mAs
+	ID_ms
+	ID_Dose
+	ID_Focus
+	ID_ImageAmplification
+	ID_ImageGradation
+	ImageAutoamplification
+	ImageWinCenter
+	ImageWinWidth
+	ImageWinAutowindowing
+
+FPSet
+	ID
+	Name
+
+Technique
+	ID
+	Value
+
+OGP_kV
+	ID
+	Value
+
+RADOGP_mAs
+	ID
+	Value
+
+Dose_Rad
+	ID
+	Dose
+
+Focus
+	ID
+	Name
+
+FilterType
+	ID
+	Name
+
+ImageAmplification
+	ID
+	Value
+
+GradationParameter
+	ID
+	Name
+
+SpatialFrequencyParameter
+	ID
+	Name

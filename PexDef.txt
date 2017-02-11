@@ -1,0 +1,12 @@
+Namn -> OGP: Name
+Flouro -> Flouro
+Punkt -> RAD_OGP : ID_Technique
+kV -> OGP: ID_kV
+mAs -> RAD_OGP: ID_mAs
+ms -> RAD_OGP: ID_ms
+Dos -> RAD_OGP: ID_Dose
+Fokus -> RAD: ID_Focus
+Cu -> OGP: ID_FilterType
+Amp -> RAD_OGP: ID_ImageAmplification
+Amp auto -> RAD_OGP: ImageAutoamplification
+LUT -> RAD_OGP:ID_ImageGradation -> Gradation Parameter:Name
