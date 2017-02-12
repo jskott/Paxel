@@ -44,6 +44,11 @@
             this.m_exportToExcelLabel = new System.Windows.Forms.Label();
             this.m_exportToExcelList = new System.Windows.Forms.ListView();
             this.m_filterEdit = new System.Windows.Forms.TextBox();
+            this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.organParameterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.spatialFrequencyParameterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            this.reloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.m_mainMain.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -51,6 +56,7 @@
             // 
             this.m_mainMain.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
+            this.viewToolStripMenuItem,
             this.toolsToolStripMenuItem});
             this.m_mainMain.Location = new System.Drawing.Point(0, 0);
             this.m_mainMain.Name = "m_mainMain";
@@ -95,7 +101,9 @@
             this.addToolStripMenuItem,
             this.removeToolStripMenuItem,
             this.toolStripSeparator2,
-            this.exportToExcelToolStripMenuItem});
+            this.exportToExcelToolStripMenuItem,
+            this.toolStripSeparator3,
+            this.reloadToolStripMenuItem});
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
             this.toolsToolStripMenuItem.Text = "Tools";
@@ -189,6 +197,44 @@
             this.m_filterEdit.TextChanged += new System.EventHandler(this.OnFilterTextChanged);
             this.m_filterEdit.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnFilterKeyDown);
             // 
+            // viewToolStripMenuItem
+            // 
+            this.viewToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.organParameterToolStripMenuItem,
+            this.spatialFrequencyParameterToolStripMenuItem});
+            this.viewToolStripMenuItem.Name = "viewToolStripMenuItem";
+            this.viewToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
+            this.viewToolStripMenuItem.Text = "View";
+            // 
+            // organParameterToolStripMenuItem
+            // 
+            this.organParameterToolStripMenuItem.Name = "organParameterToolStripMenuItem";
+            this.organParameterToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.G)));
+            this.organParameterToolStripMenuItem.Size = new System.Drawing.Size(265, 22);
+            this.organParameterToolStripMenuItem.Text = "Organ Parameter";
+            this.organParameterToolStripMenuItem.Click += new System.EventHandler(this.organParameterToolStripMenuItem_Click);
+            // 
+            // spatialFrequencyParameterToolStripMenuItem
+            // 
+            this.spatialFrequencyParameterToolStripMenuItem.Name = "spatialFrequencyParameterToolStripMenuItem";
+            this.spatialFrequencyParameterToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.T)));
+            this.spatialFrequencyParameterToolStripMenuItem.Size = new System.Drawing.Size(265, 22);
+            this.spatialFrequencyParameterToolStripMenuItem.Text = "Spatial Frequency Parameter";
+            this.spatialFrequencyParameterToolStripMenuItem.Click += new System.EventHandler(this.spatialFrequencyParameterToolStripMenuItem_Click);
+            // 
+            // toolStripSeparator3
+            // 
+            this.toolStripSeparator3.Name = "toolStripSeparator3";
+            this.toolStripSeparator3.Size = new System.Drawing.Size(187, 6);
+            // 
+            // reloadToolStripMenuItem
+            // 
+            this.reloadToolStripMenuItem.Name = "reloadToolStripMenuItem";
+            this.reloadToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.R)));
+            this.reloadToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
+            this.reloadToolStripMenuItem.Text = "Reload";
+            this.reloadToolStripMenuItem.Click += new System.EventHandler(this.reloadToolStripMenuItem_Click);
+            // 
             // PexelForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -230,6 +276,11 @@
         private System.Windows.Forms.ListView m_exportToExcelList;
         private System.Windows.Forms.TextBox m_filterEdit;
         private FlickerFreeListView m_mainListView;
+        private System.Windows.Forms.ToolStripMenuItem viewToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem organParameterToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem spatialFrequencyParameterToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
+        private System.Windows.Forms.ToolStripMenuItem reloadToolStripMenuItem;
     }
 }
 

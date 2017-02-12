@@ -63,6 +63,19 @@ inner join GradationParameter ON RAD_OGP.ID_ImageGradation = GradationParameter.
 inner join SpatialFrequencyParameter ON OGP.ID_ImaSpatialFreqParam = SpatialFrequencyParameter.ID
 
 
+
+SELECT 
+	SpatialFrequencyParameter.Name,
+	DiamondViewID.Name,
+	EdgeFilterKernel.Value,
+	SpatialFrequencyParameter.EdgeFilterGain,
+	HarmonisKernel.Value,
+	SpatialFrequencyParameter.HarmonisGain
+FROM ((SpatialFrequencyParameter 
+inner join DiamondViewID ON SpatialFrequencyParameter.ID_DiamondViewID = DiamondViewID.ID)
+inner join EdgeFilterKernel ON SpatialFrequencyParameter.ID_EdgeFilterKernel = EdgeFilterKernel.ID)
+inner join HarmonisKernel ON SpatialFrequencyParameter.ID_HarmonisKernel = HarmonisKernel.ID
+
 	
 	
 select

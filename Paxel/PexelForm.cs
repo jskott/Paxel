@@ -13,6 +13,7 @@ using System.Runtime.InteropServices;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.Text.RegularExpressions;
 using System.Collections;
+using System.Collections.Specialized;
 
 namespace Pexel
 {
@@ -21,7 +22,13 @@ namespace Pexel
         private PexTable m_pexTable = new PexTable();
         private PexTable m_visibleRows = new PexTable();
         private PexTableComparer m_sorter = new PexTableComparer();
+        private ViewType m_viewType = ViewType.OGP;
 
+        enum ViewType
+        {
+            OGP,
+            SFP
+        }
 
         public PexelForm()
         {
@@ -36,12 +43,9 @@ namespace Pexel
 
             if (dlg.ShowDialog() == DialogResult.OK)
             {
-                string path = dlg.FileName;
+                Properties.Settings.Default.LastMDBPath = dlg.FileName;
 
-                if(ConnectToMDBFile(path))
-                {
-                    Populate();
-                }
+                InitialPopulate();
             }
         }
 
@@ -78,37 +82,57 @@ namespace Pexel
         private string GetSqlCommand()
         {
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("SELECT");
-            sb.AppendLine("    OGP.Name,");
-            sb.AppendLine("    FPSet.Name,");
-            sb.AppendLine("    Technique.Value,");
-            sb.AppendLine("    OGP_kV.Value,");
-            sb.AppendLine("    RADOGP_mAs.Value,");
-            sb.AppendLine("    RADOGP_ms.Value,");
-            sb.AppendLine("    Dose_Rad.Dose,");
-            sb.AppendLine("    Focus.Name,");
-            sb.AppendLine("    FilterType.Name,");
-            sb.AppendLine("    ImageAmplification.Value,");
-            sb.AppendLine("    RAD_OGP.ImageAutoamplification,");
-            sb.AppendLine("    GradationParameter.Name,");
-            sb.AppendLine("    SpatialFrequencyParameter.Name,");
-            sb.AppendLine("    RAD_OGP.ImageWinCenter,");
-            sb.AppendLine("    RAD_OGP.ImageWinWidth,");
-            sb.AppendLine("    RAD_OGP.ImageWinAutowindowing,");
-            sb.AppendLine("    OGP.Grid");
-            sb.AppendLine("FROM(((((((((((OGP");
-            sb.AppendLine("left join FPSet ON FPSet.ID = OGP.ID_FPSet)");
-            sb.AppendLine("left join RAD_OGP ON RAD_OGP.ID = OGP.ID)");
-            sb.AppendLine("left join Technique ON RAD_OGP.ID_Technique = Technique.ID)");
-            sb.AppendLine("left join OGP_kV ON OGP.ID_kV = OGP_kV.ID)");
-            sb.AppendLine("left join RADOGP_mAs ON RAD_OGP.ID_mAs = RADOGP_mAs.ID)");
-            sb.AppendLine("left join RADOGP_ms ON RAD_OGP.ID_ms = RADOGP_ms.ID)");
-            sb.AppendLine("left join Dose_Rad ON RAD_OGP.ID_Dose = Dose_Rad.ID)");
-            sb.AppendLine("left join Focus ON OGP.ID_Focus = Focus.ID)");
-            sb.AppendLine("left join FilterType ON OGP.ID_FilterType = FilterType.ID)");
-            sb.AppendLine("left join ImageAmplification ON RAD_OGP.ID_ImageAmplification = ImageAmplification.ID)");
-            sb.AppendLine("left join GradationParameter ON RAD_OGP.ID_ImageGradation = GradationParameter.IDs)");
-            sb.AppendLine("left join SpatialFrequencyParameter ON OGP.ID_ImaSpatialFreqParam = SpatialFrequencyParameter.ID");
+
+            switch (m_viewType)
+            {
+                case ViewType.OGP:
+                    sb.AppendLine("SELECT");
+                    sb.AppendLine("    OGP.Name,");
+                    sb.AppendLine("    FPSet.Name,");
+                    sb.AppendLine("    Technique.Value,");
+                    sb.AppendLine("    OGP_kV.Value,");
+                    sb.AppendLine("    RADOGP_mAs.Value,");
+                    sb.AppendLine("    RADOGP_ms.Value,");
+                    sb.AppendLine("    Dose_Rad.Dose,");
+                    sb.AppendLine("    Focus.Name,");
+                    sb.AppendLine("    FilterType.Name,");
+                    sb.AppendLine("    ImageAmplification.Value,");
+                    sb.AppendLine("    RAD_OGP.ImageAutoamplification,");
+                    sb.AppendLine("    GradationParameter.Name,");
+                    sb.AppendLine("    SpatialFrequencyParameter.Name,");
+                    sb.AppendLine("    RAD_OGP.ImageWinCenter,");
+                    sb.AppendLine("    RAD_OGP.ImageWinWidth,");
+                    sb.AppendLine("    RAD_OGP.ImageWinAutowindowing,");
+                    sb.AppendLine("    OGP.Grid");
+                    sb.AppendLine("FROM(((((((((((OGP");
+                    sb.AppendLine("left join FPSet ON FPSet.ID = OGP.ID_FPSet)");
+                    sb.AppendLine("left join RAD_OGP ON RAD_OGP.ID = OGP.ID)");
+                    sb.AppendLine("left join Technique ON RAD_OGP.ID_Technique = Technique.ID)");
+                    sb.AppendLine("left join OGP_kV ON OGP.ID_kV = OGP_kV.ID)");
+                    sb.AppendLine("left join RADOGP_mAs ON RAD_OGP.ID_mAs = RADOGP_mAs.ID)");
+                    sb.AppendLine("left join RADOGP_ms ON RAD_OGP.ID_ms = RADOGP_ms.ID)");
+                    sb.AppendLine("left join Dose_Rad ON RAD_OGP.ID_Dose = Dose_Rad.ID)");
+                    sb.AppendLine("left join Focus ON OGP.ID_Focus = Focus.ID)");
+                    sb.AppendLine("left join FilterType ON OGP.ID_FilterType = FilterType.ID)");
+                    sb.AppendLine("left join ImageAmplification ON RAD_OGP.ID_ImageAmplification = ImageAmplification.ID)");
+                    sb.AppendLine("left join GradationParameter ON RAD_OGP.ID_ImageGradation = GradationParameter.IDs)");
+                    sb.AppendLine("left join SpatialFrequencyParameter ON OGP.ID_ImaSpatialFreqParam = SpatialFrequencyParameter.ID");
+                    break;
+                case ViewType.SFP:
+                    sb.AppendLine("SELECT");
+                    sb.AppendLine("    SpatialFrequencyParameter.Name,");
+                    sb.AppendLine("    DiamondViewID.Name,");
+                    sb.AppendLine("    EdgeFilterKernel.Value,");
+                    sb.AppendLine("    SpatialFrequencyParameter.EdgeFilterGain,");
+                    sb.AppendLine("    HarmonisKernel.Value,");
+                    sb.AppendLine("    SpatialFrequencyParameter.HarmonisGain");
+                    sb.AppendLine("    FROM((SpatialFrequencyParameter");
+                    sb.AppendLine("inner join DiamondViewID ON SpatialFrequencyParameter.ID_DiamondViewID = DiamondViewID.ID)");
+                    sb.AppendLine("inner join EdgeFilterKernel ON SpatialFrequencyParameter.ID_EdgeFilterKernel = EdgeFilterKernel.ID)");
+                    sb.AppendLine("inner join HarmonisKernel ON SpatialFrequencyParameter.ID_HarmonisKernel = HarmonisKernel.ID");
+                    break;
+            }
+                    
 
             return sb.ToString();
         }
@@ -196,6 +220,48 @@ namespace Pexel
 
             return listItem;
         }
+        private void SetupLabels()
+        {
+            switch(m_viewType)
+            {
+                case ViewType.OGP:
+                    m_organProgramsLabel.Text = "Organ Parameters";
+                    m_exportToExcelLabel.Text = "Export Organ Parameters to Excel";
+                    break;
+                case ViewType.SFP:
+                    m_organProgramsLabel.Text = "Spatial Frequency Parameters";
+                    m_exportToExcelLabel.Text = "Export Spatial Frequency Parameters to Excel";
+                    break;
+            }
+        }
+        private void InitialPopulate()
+        {
+            SetupLabels();
+
+            organParameterToolStripMenuItem.Checked = m_viewType == ViewType.OGP;
+            spatialFrequencyParameterToolStripMenuItem.Checked = m_viewType == ViewType.SFP;
+
+            SetupColumns(m_mainListView);
+            SetupColumns(m_exportToExcelList);
+
+            string mdbPath = Properties.Settings.Default.LastMDBPath;
+
+            if (mdbPath.Length > 0)
+            {
+                if (ConnectToMDBFile(mdbPath))
+                {
+                    Populate();
+                    m_mainListView.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
+                    m_mainListView.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+                }
+                else
+                {
+                    Properties.Settings.Default.LastMDBPath = "";
+                    Properties.Settings.Default.Save();
+                }
+            }
+
+        }
         private void Populate()
         {
             m_visibleRows.Clear();
@@ -210,23 +276,7 @@ namespace Pexel
             m_mainListView.VirtualListSize = m_visibleRows.Count;
 
         }
-        private void OpenLastMDBIfPossible()
-        {
-            string mdbPath = Properties.Settings.Default.LastMDBPath;
 
-            if (mdbPath.Length > 0)
-            {
-                if (ConnectToMDBFile(mdbPath))
-                {
-                    Populate();
-                }
-                else
-                {
-                    Properties.Settings.Default.LastMDBPath = "";
-                    Properties.Settings.Default.Save();
-                }
-            }
-        }
         private bool ConnectToMDBFile(string path)
         {
             bool ret = false;
@@ -268,32 +318,45 @@ namespace Pexel
         }
         private void SetupColumns(ListView listView)
         {
-            listView.Columns.Add("Namn");
-            listView.Columns.Add("Flouro");
-            listView.Columns.Add("Punkt");
-            listView.Columns.Add("kV");
-            listView.Columns.Add("mAs");
-            listView.Columns.Add("ms");
-            listView.Columns.Add("Dos");
-            listView.Columns.Add("Fokus");
-            listView.Columns.Add("Cu");
-            listView.Columns.Add("Amp");
-            listView.Columns.Add("Amp auto");
-            listView.Columns.Add("LUT");
-            listView.Columns.Add("SFP");
-            listView.Columns.Add("WC");
-            listView.Columns.Add("WW");
-            listView.Columns.Add("Auto");
-            listView.Columns.Add("Raster");
-            listView.Columns.Add("Höjd");
-            listView.Columns.Add("Bredd");
+            listView.Columns.Clear();
+
+            switch(m_viewType)
+            {
+                case ViewType.OGP:
+                    listView.Columns.Add("Namn");
+                    listView.Columns.Add("Flouro");
+                    listView.Columns.Add("Punkt");
+                    listView.Columns.Add("kV");
+                    listView.Columns.Add("mAs");
+                    listView.Columns.Add("ms");
+                    listView.Columns.Add("Dos");
+                    listView.Columns.Add("Fokus");
+                    listView.Columns.Add("Cu");
+                    listView.Columns.Add("Amp");
+                    listView.Columns.Add("Amp auto");
+                    listView.Columns.Add("LUT");
+                    listView.Columns.Add("SFP");
+                    listView.Columns.Add("WC");
+                    listView.Columns.Add("WW");
+                    listView.Columns.Add("Auto");
+                    listView.Columns.Add("Raster");
+                    listView.Columns.Add("Höjd");
+                    listView.Columns.Add("Bredd");
+                    break;
+                case ViewType.SFP:
+                    listView.Columns.Add("Namn");
+                    listView.Columns.Add("DV");
+                    listView.Columns.Add("EK");
+                    listView.Columns.Add("EG");
+                    listView.Columns.Add("HK");
+                    listView.Columns.Add("HG");
+                    break;
+            }           
         }
         private void OnFormLoad(object sender, EventArgs e)
         {
             m_mainListView.ListViewItemSorter = new ListViewSorter();
-            SetupColumns(m_mainListView);
-            SetupColumns(m_exportToExcelList);
-            OpenLastMDBIfPossible();
+            InitialPopulate();
         }
 
         private void ExportToExcel()
@@ -432,6 +495,12 @@ namespace Pexel
 
                 m_exportToExcelList.Items.Add(newItem);
             }
+
+            if(m_exportToExcelList.Items.Count == 1)
+            {
+                m_exportToExcelList.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
+                m_exportToExcelList.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+            }
         }
         private void RemoveSelectItemFromExcelExport()
         {
@@ -464,6 +533,27 @@ namespace Pexel
             {
                 MoveSelection(false);
             }
+        }
+
+        private void organParameterToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            m_viewType = ViewType.OGP;
+
+            InitialPopulate();
+
+        }
+
+        private void spatialFrequencyParameterToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            m_viewType = ViewType.SFP;
+
+            InitialPopulate();
+
+        }
+
+        private void reloadToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            InitialPopulate();
         }
     }
 }
