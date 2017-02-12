@@ -11,12 +11,17 @@ using System.IO;
 using System.Data.Odbc;
 using System.Runtime.InteropServices;
 using Excel = Microsoft.Office.Interop.Excel;
+using System.Text.RegularExpressions;
+using System.Collections;
 
 namespace Pexel
 {
     public partial class PexelForm : Form
     {
         private PexTable m_pexTable = new PexTable();
+        private PexTable m_visibleRows = new PexTable();
+        private PexTableComparer m_sorter = new PexTableComparer();
+
 
         public PexelForm()
         {
@@ -137,6 +142,8 @@ namespace Pexel
                         m_pexTable.Add(row);
                     }
 
+                    m_pexTable.Sort(m_sorter);
+
                     // Call Close when done reading.
                     reader.Close();
                 }
@@ -154,10 +161,11 @@ namespace Pexel
 
             if (!ret)
             {
+                Regex regex = new Regex(filter);
 
                 foreach (PexItem value in row)
                 {
-                    if (value.Key.Contains(filter))
+                    if (regex.IsMatch(value.Key))
                     {
                         ret = true;
                         break;
@@ -167,32 +175,39 @@ namespace Pexel
             }
             return ret;
         }
+        ListViewItem ListItemFromPexRow(PexDataRow pexRow)
+        {
+            ListViewItem listItem = new ListViewItem();
+            bool first = true;
+            foreach (PexItem item in pexRow)
+            {
+                if (first)
+                {
+                    listItem.Text = item.DisplayName;
+                    first = false;
+                }
+                else
+                {
+                    listItem.SubItems.Add(item.DisplayName);
+                }
+            }
+            listItem.SubItems.Add("");
+            listItem.SubItems.Add("");
+
+            return listItem;
+        }
         private void Populate()
         {
-            m_mainListView.Items.Clear();
-
+            m_visibleRows.Clear();
             foreach(PexDataRow row in m_pexTable)
             {
                 if(SatisfyFilter(row))
                 {
-                    ListViewItem listItem = new ListViewItem();
-                    bool first = true;
-                    foreach (PexItem item in row)
-                    {
-                        if (first)
-                        {
-                            listItem.Text = item.DisplayName;
-                            first = false;
-                        }
-                        else
-                        {
-                            listItem.SubItems.Add(item.DisplayName);
-                        }
-                    }
-
-                    m_mainListView.Items.Add(listItem);
+                    m_visibleRows.Add(row);
                 }
             }
+
+            m_mainListView.VirtualListSize = m_visibleRows.Count;
 
         }
         private void OpenLastMDBIfPossible()
@@ -345,29 +360,56 @@ namespace Pexel
         {}
 
         class PexTable : List<PexDataRow>
-        { }
+        {
+        }
+
+        class PexTableComparer : IComparer<PexDataRow>
+        {
+            public int m_column = 0;
+            public bool m_ascending = true;
+
+            private CaseInsensitiveComparer m_objectCompare;
+            public PexTableComparer()
+            {
+                m_column = 0;
+
+                // Initialize the CaseInsensitiveComparer object
+                m_objectCompare = new CaseInsensitiveComparer();
+            }
+
+            public int Compare(PexDataRow row1, PexDataRow row2)
+            {
+                int compareResult;
+
+                compareResult = m_objectCompare.Compare(row1[m_column].DisplayName, row2[m_column].DisplayName);
+
+                return m_ascending ? compareResult : -compareResult;
+            }
+        }
 
         private void OnColumnClick(object sender, ColumnClickEventArgs e)
         {
-            ListViewSorter sorter = m_mainListView.ListViewItemSorter as ListViewSorter;
-
-            if (sorter.m_column == e.Column)
+            
+            if (m_sorter.m_column == e.Column)
             {
-                sorter.m_ascending = !sorter.m_ascending;
+                m_sorter.m_ascending = !m_sorter.m_ascending;
             }
             else
             {
-                sorter.m_ascending = true;
+                m_sorter.m_ascending = true;
             }
 
-            sorter.m_column = e.Column;
+            m_sorter.m_column = e.Column;
 
-            m_mainListView.Sort();
+            m_visibleRows.Sort(m_sorter);
+            m_pexTable.Sort(m_sorter);
+            m_mainListView.Invalidate();
         }
 
         private void OnGetVirtualItem(object sender, RetrieveVirtualItemEventArgs e)
         {
-
+            PexDataRow row = m_visibleRows[e.ItemIndex];
+            e.Item = ListItemFromPexRow(row);
         }
 
         public class FlickerFreeListView : ListView
@@ -379,22 +421,17 @@ namespace Pexel
             protected override void OnHandleCreated(EventArgs e)
             {
                 base.OnHandleCreated(e);
-                //SetWindowTheme(this.Handle, "explorer", null);
             }
         }
 
         private void AddSelectItemToExcelExport()
         {
-            foreach(ListViewItem item in m_mainListView.SelectedItems)
+            foreach(int index in m_mainListView.SelectedIndices)
             {
-                ListViewItem newItem = item.Clone() as ListViewItem;
+                ListViewItem newItem = ListItemFromPexRow(m_visibleRows[index]);
 
                 m_exportToExcelList.Items.Add(newItem);
             }
-
-            m_exportToExcelList.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
-            m_exportToExcelList.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
-
         }
         private void RemoveSelectItemFromExcelExport()
         {

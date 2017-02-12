@@ -141,6 +141,7 @@
             this.m_mainListView.TabIndex = 1;
             this.m_mainListView.UseCompatibleStateImageBehavior = false;
             this.m_mainListView.View = System.Windows.Forms.View.Details;
+            this.m_mainListView.VirtualMode = true;
             this.m_mainListView.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.OnColumnClick);
             this.m_mainListView.RetrieveVirtualItem += new System.Windows.Forms.RetrieveVirtualItemEventHandler(this.OnGetVirtualItem);
             this.m_mainListView.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.OnMouseDoubleClick);
