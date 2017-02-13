@@ -127,9 +127,9 @@ namespace Pexel
                     sb.AppendLine("    HarmonisKernel.Value,");
                     sb.AppendLine("    SpatialFrequencyParameter.HarmonisGain");
                     sb.AppendLine("    FROM((SpatialFrequencyParameter");
-                    sb.AppendLine("inner join DiamondViewID ON SpatialFrequencyParameter.ID_DiamondViewID = DiamondViewID.ID)");
-                    sb.AppendLine("inner join EdgeFilterKernel ON SpatialFrequencyParameter.ID_EdgeFilterKernel = EdgeFilterKernel.ID)");
-                    sb.AppendLine("inner join HarmonisKernel ON SpatialFrequencyParameter.ID_HarmonisKernel = HarmonisKernel.ID");
+                    sb.AppendLine("left join DiamondViewID ON SpatialFrequencyParameter.ID_DiamondViewID = DiamondViewID.ID)");
+                    sb.AppendLine("left join EdgeFilterKernel ON SpatialFrequencyParameter.ID_EdgeFilterKernel = EdgeFilterKernel.ID)");
+                    sb.AppendLine("left join HarmonisKernel ON SpatialFrequencyParameter.ID_HarmonisKernel = HarmonisKernel.ID");
                     break;
             }
                     
