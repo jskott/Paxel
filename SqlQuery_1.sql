@@ -47,7 +47,9 @@ SELECT
 	RAD_OGP.ImageWinCenter,
 	RAD_OGP.ImageWinWidth,
 	RAD_OGP.ImageWinAutowindowing,
-	OGP.Grid
+	RAD_OGP.StandGrid,
+	RAD_OGP.StandShutter1,
+	RAD_OGP.StandShutter2
 FROM (((((((((((OGP 
 inner join FPSet ON FPSet.ID = OGP.ID_FPSet)
 inner join RAD_OGP ON RAD_OGP.ID = OGP.ID)

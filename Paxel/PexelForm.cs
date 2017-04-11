@@ -23,6 +23,7 @@ namespace Pexel
         private PexTable m_visibleRows = new PexTable();
         private PexTableComparer m_sorter = new PexTableComparer();
         private ViewType m_viewType = ViewType.OGP;
+        private TableByColumn m_tableByColumn = null;
 
         enum ViewType
         {
@@ -103,7 +104,16 @@ namespace Pexel
                     sb.AppendLine("    RAD_OGP.ImageWinCenter,");
                     sb.AppendLine("    RAD_OGP.ImageWinWidth,");
                     sb.AppendLine("    RAD_OGP.ImageWinAutowindowing,");
-                    sb.AppendLine("    OGP.Grid");
+                    if (ColumnExistInTable("StandGrid", "RAD_OGP"))
+                    {
+                        sb.AppendLine("    RAD_OGP.StandGrid,");
+                    }
+                    else if(ColumnExistInTable("Grid", "OGP"))
+                    {
+                        sb.AppendLine("    OGP.Grid,");
+                    }
+                    sb.AppendLine("    RAD_OGP.StandShutter1,");
+                    sb.AppendLine("    RAD_OGP.StandShutter2");
                     sb.AppendLine("FROM(((((((((((OGP");
                     sb.AppendLine("left join FPSet ON FPSet.ID = OGP.ID_FPSet)");
                     sb.AppendLine("left join RAD_OGP ON RAD_OGP.ID = OGP.ID)");
@@ -136,11 +146,37 @@ namespace Pexel
 
             return sb.ToString();
         }
+
+        private void PopulateTablesByColumn(OdbcConnection connection)
+        {
+            m_tableByColumn = new TableByColumn();
+            using (DataTable tableschema = connection.GetSchema("COLUMNS"))
+            {
+                // first column name
+                foreach (DataRow row in tableschema.Rows)
+                {
+                    string tableName = row["TABLE_NAME"].ToString();
+                    string columnName = row["COLUMN_NAME"].ToString();
+
+                    if(!m_tableByColumn.ContainsKey(columnName))
+                    {
+                        m_tableByColumn[columnName] = new StringSet();
+                    }
+
+                    m_tableByColumn[columnName].Add(tableName);
+                }
+            }
+        }
+
+        private bool ColumnExistInTable(string column, string table)
+        {
+            return m_tableByColumn.Exists(column, table);
+        }
         private void TransformData(OdbcConnection connection)
         {
             if(ValidConnection(connection))
             {
-
+                PopulateTablesByColumn(connection);
                 OdbcCommand odbcCommand = new OdbcCommand(GetSqlCommand(), connection);
 
                 try
@@ -423,7 +459,32 @@ namespace Pexel
         {}
 
         class PexTable : List<PexDataRow>
+        {}
+
+        class StringSet : Dictionary<string, int>
         {
+            public void Add(string value)
+            {
+                this[value] = 0;
+            }
+        }
+        class TableByColumn : Dictionary<string, StringSet>
+        {
+            public bool Exists(string column, string table)
+            {
+                bool ret = false;
+
+                if (ContainsKey(column))
+                {
+                    StringSet tables = this[column];
+
+                    if (tables != null)
+                    {
+                        ret = tables.ContainsKey(table);
+                    }
+                }
+                return ret;
+            }
         }
 
         class PexTableComparer : IComparer<PexDataRow>
