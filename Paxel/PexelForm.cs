@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
-using System.Data.Odbc;
+using System.Data.OleDb;
 using System.Runtime.InteropServices;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.Text.RegularExpressions;
@@ -24,7 +24,7 @@ namespace Pexel
         private PexTableComparer m_sorter = new PexTableComparer();
         private ViewType m_viewType = ViewType.OGP;
         private TableByColumn m_tableByColumn = null;
-
+        private TableByName m_tableByName = new TableByName();
         enum ViewType
         {
             OGP,
@@ -75,7 +75,7 @@ namespace Pexel
             Populate();
         }
 
-        private bool ValidConnection(OdbcConnection connection)
+        private bool ValidConnection(OleDbConnection connection)
         {
             return connection != null && connection.State == ConnectionState.Open;
         }
@@ -108,12 +108,12 @@ namespace Pexel
                     {
                         sb.AppendLine("    RAD_OGP.StandGrid,");
                     }
-                    else if(ColumnExistInTable("Grid", "OGP"))
+                    else if (ColumnExistInTable("Grid", "OGP"))
                     {
                         sb.AppendLine("    OGP.Grid,");
                     }
-                    sb.AppendLine("    RAD_OGP.StandShutter1,");
-                    sb.AppendLine("    RAD_OGP.StandShutter2");
+                    sb.AppendLine("    RAD_OGP.StandShutter2,");
+                    sb.AppendLine("    RAD_OGP.StandShutter1");
                     sb.AppendLine("FROM(((((((((((OGP");
                     sb.AppendLine("left join FPSet ON FPSet.ID = OGP.ID_FPSet)");
                     sb.AppendLine("left join RAD_OGP ON RAD_OGP.ID = OGP.ID)");
@@ -142,12 +142,12 @@ namespace Pexel
                     sb.AppendLine("left join HarmonisKernel ON SpatialFrequencyParameter.ID_HarmonisKernel = HarmonisKernel.ID");
                     break;
             }
-                    
+
 
             return sb.ToString();
         }
 
-        private void PopulateTablesByColumn(OdbcConnection connection)
+        private void PopulateTablesByColumn(OleDbConnection connection)
         {
             m_tableByColumn = new TableByColumn();
             using (DataTable tableschema = connection.GetSchema("COLUMNS"))
@@ -158,30 +158,93 @@ namespace Pexel
                     string tableName = row["TABLE_NAME"].ToString();
                     string columnName = row["COLUMN_NAME"].ToString();
 
-                    if(!m_tableByColumn.ContainsKey(columnName))
+
+                    if (!m_tableByColumn.ContainsKey(columnName))
                     {
                         m_tableByColumn[columnName] = new StringSet();
                     }
 
                     m_tableByColumn[columnName].Add(tableName);
+
+                    Table table = null;
+                    if (!m_tableByName.TryGetValue(tableName, out table))
+                    {
+                        table = new Table();
+                        table.Name = tableName;
+                        m_tableByName[tableName] = table;
+                    }
+
+                    table.Columns.Add(columnName);
                 }
             }
+
+            PopulateForeignKeys(connection);
+
+        }
+        // Retrieve the list of a table's foreign keys.
+        private void PopulateForeignKeys(OleDbConnection connection)
+        {
+            String[] restrictions = new string[] { null };
+            DataTable schema;
+            // Open the schema information for the foreign keys.
+            schema = connection.GetOleDbSchemaTable(OleDbSchemaGuid.Foreign_Keys, restrictions);
+            // Enumerate the table's foreign keys.
+            foreach (DataRow row in schema.Rows)
+            {
+                string fkTableName = row["FK_TABLE_NAME"].ToString();
+                string fkColumnName = row["FK_COLUMN_NAME"].ToString();
+                string pkTableName = row["PK_TABLE_NAME"].ToString();
+                string pkColumnName = row["PK_COLUMN_NAME"].ToString();
+
+                Relationship relationship = new Relationship();
+
+                relationship.ForeignKey = fkColumnName;
+                Table table = null;
+                if (m_tableByName.TryGetValue(fkTableName, out table))
+                {
+                    relationship.ForeignTable = table;
+                }
+                if (m_tableByName.TryGetValue(pkTableName, out table))
+                {
+                    relationship.PrimaryTable = table;
+                }
+                relationship.PrimaryKey = pkColumnName;
+
+                if (relationship.ForeignTable != null && relationship.PrimaryTable != null)
+                {
+                    relationship.ForeignTable.Relations.Add(relationship);
+                }
+
+                //Console.WriteLine(row["FK_TABLE_NAME"].ToString() + ":" + row["FK_COLUMN_NAME"].ToString() + " --> " + row["PK_TABLE_NAME"].ToString() + ":" + row["PK_COLUMN_NAME"].ToString() + " " + row["FK_NAME"].ToString());
+            }
+
+            /*
+            foreach (Table table in m_tableByName.Values)
+            {
+                Console.WriteLine(table.Name);
+
+                foreach (string column in table.FlatColumns())
+                {
+                    Console.WriteLine("\t" + column);
+                }
+            }
+            */
         }
 
         private bool ColumnExistInTable(string column, string table)
         {
             return m_tableByColumn.Exists(column, table);
         }
-        private void TransformData(OdbcConnection connection)
+        private void TransformData(OleDbConnection connection)
         {
-            if(ValidConnection(connection))
+            if (ValidConnection(connection))
             {
                 PopulateTablesByColumn(connection);
-                OdbcCommand odbcCommand = new OdbcCommand(GetSqlCommand(), connection);
+                OleDbCommand odbcCommand = new OleDbCommand(GetSqlCommand(), connection);
 
                 try
                 {
-                    OdbcDataReader reader = odbcCommand.ExecuteReader();
+                    OleDbDataReader reader = odbcCommand.ExecuteReader();
 
                     m_pexTable = new PexTable();
 
@@ -258,7 +321,7 @@ namespace Pexel
         }
         private void SetupLabels()
         {
-            switch(m_viewType)
+            switch (m_viewType)
             {
                 case ViewType.OGP:
                     m_organProgramsLabel.Text = "Organ Parameters";
@@ -301,9 +364,9 @@ namespace Pexel
         private void Populate()
         {
             m_visibleRows.Clear();
-            foreach(PexDataRow row in m_pexTable)
+            foreach (PexDataRow row in m_pexTable)
             {
-                if(SatisfyFilter(row))
+                if (SatisfyFilter(row))
                 {
                     m_visibleRows.Add(row);
                 }
@@ -316,18 +379,17 @@ namespace Pexel
         private bool ConnectToMDBFile(string path)
         {
             bool ret = false;
-            if(File.Exists(path))
+            if (File.Exists(path))
             {
                 StringBuilder sb = new StringBuilder();
 
-                sb.Append(@"Driver={Microsoft Access Driver (*.mdb)}; Dbq=");
+                sb.Append(@"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=");
                 sb.Append(path);
-                sb.Append(@";Uid=Admin;Pwd=;");
 
                 string connectString = sb.ToString();
 
 
-                OdbcConnection connection = new OdbcConnection();
+                OleDbConnection connection = new OleDbConnection();
 
                 connection.ConnectionString = connectString;
 
@@ -343,7 +405,7 @@ namespace Pexel
 
                     ret = true;
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     MessageBox.Show(ex.Message);
                 }
@@ -356,7 +418,7 @@ namespace Pexel
         {
             listView.Columns.Clear();
 
-            switch(m_viewType)
+            switch (m_viewType)
             {
                 case ViewType.OGP:
                     listView.Columns.Add("Namn");
@@ -387,7 +449,7 @@ namespace Pexel
                     listView.Columns.Add("HK");
                     listView.Columns.Add("HG");
                     break;
-            }           
+            }
         }
         private void OnFormLoad(object sender, EventArgs e)
         {
@@ -413,14 +475,14 @@ namespace Pexel
             xlWorkBook = xlApp.Workbooks.Add(misValue);
             xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(1);
 
-            for(int i = 0; i < m_exportToExcelList.Columns.Count; i++)
+            for (int i = 0; i < m_exportToExcelList.Columns.Count; i++)
             {
                 ColumnHeader columnHeader = m_exportToExcelList.Columns[i];
 
                 xlWorkSheet.Cells[1, i + 1] = columnHeader.Text;
             }
 
-            for(int i = 0; i < m_exportToExcelList.Items.Count; i++)
+            for (int i = 0; i < m_exportToExcelList.Items.Count; i++)
             {
                 int row = i + 2;
                 ListViewItem item = m_exportToExcelList.Items[i];
@@ -445,75 +507,14 @@ namespace Pexel
             Marshal.ReleaseComObject(xlApp);
         }
 
-    private void OnFormClosed(object sender, FormClosedEventArgs e)
+        private void OnFormClosed(object sender, FormClosedEventArgs e)
         {
         }
 
-        class PexItem
-        {
-            public string DisplayName { get; set; }
-            public string Key { get; set; }
-        }
-
-        class PexDataRow : List<PexItem>
-        {}
-
-        class PexTable : List<PexDataRow>
-        {}
-
-        class StringSet : Dictionary<string, int>
-        {
-            public void Add(string value)
-            {
-                this[value] = 0;
-            }
-        }
-        class TableByColumn : Dictionary<string, StringSet>
-        {
-            public bool Exists(string column, string table)
-            {
-                bool ret = false;
-
-                if (ContainsKey(column))
-                {
-                    StringSet tables = this[column];
-
-                    if (tables != null)
-                    {
-                        ret = tables.ContainsKey(table);
-                    }
-                }
-                return ret;
-            }
-        }
-
-        class PexTableComparer : IComparer<PexDataRow>
-        {
-            public int m_column = 0;
-            public bool m_ascending = true;
-
-            private CaseInsensitiveComparer m_objectCompare;
-            public PexTableComparer()
-            {
-                m_column = 0;
-
-                // Initialize the CaseInsensitiveComparer object
-                m_objectCompare = new CaseInsensitiveComparer();
-            }
-
-            public int Compare(PexDataRow row1, PexDataRow row2)
-            {
-                int compareResult;
-
-                compareResult = m_objectCompare.Compare(row1[m_column].DisplayName, row2[m_column].DisplayName);
-
-                return m_ascending ? compareResult : -compareResult;
-            }
-        }
 
         private void OnColumnClick(object sender, ColumnClickEventArgs e)
         {
-            
+
             if (m_sorter.m_column == e.Column)
             {
                 m_sorter.m_ascending = !m_sorter.m_ascending;
@@ -550,14 +551,14 @@ namespace Pexel
 
         private void AddSelectItemToExcelExport()
         {
-            foreach(int index in m_mainListView.SelectedIndices)
+            foreach (int index in m_mainListView.SelectedIndices)
             {
                 ListViewItem newItem = ListItemFromPexRow(m_visibleRows[index]);
 
                 m_exportToExcelList.Items.Add(newItem);
             }
 
-            if(m_exportToExcelList.Items.Count == 1)
+            if (m_exportToExcelList.Items.Count == 1)
             {
                 m_exportToExcelList.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
                 m_exportToExcelList.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
@@ -586,7 +587,7 @@ namespace Pexel
         }
         private void OnFilterKeyDown(object sender, KeyEventArgs e)
         {
-            if(e.KeyCode == Keys.Up)
+            if (e.KeyCode == Keys.Up)
             {
                 MoveSelection(true);
             }
@@ -615,6 +616,13 @@ namespace Pexel
         private void reloadToolStripMenuItem_Click(object sender, EventArgs e)
         {
             InitialPopulate();
+        }
+
+        private void columnConfiguratorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ColumnSetupForm columnSetupForm = new ColumnSetupForm(m_tableByName);
+
+            columnSetupForm.ShowDialog();
         }
     }
 }
