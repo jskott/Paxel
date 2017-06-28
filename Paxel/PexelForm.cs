@@ -28,7 +28,8 @@ namespace Pexel
         enum ViewType
         {
             OGP,
-            SFP
+            SFP,
+            DFR
         }
 
         public PexelForm()
@@ -140,6 +141,55 @@ namespace Pexel
                     sb.AppendLine("left join DiamondViewID ON SpatialFrequencyParameter.ID_DiamondViewID = DiamondViewID.ID)");
                     sb.AppendLine("left join EdgeFilterKernel ON SpatialFrequencyParameter.ID_EdgeFilterKernel = EdgeFilterKernel.ID)");
                     sb.AppendLine("left join HarmonisKernel ON SpatialFrequencyParameter.ID_HarmonisKernel = HarmonisKernel.ID");
+                    break;
+                case ViewType.DFR:
+                    sb.AppendLine("SELECT");
+                    sb.AppendLine("OGP.Name,");
+                    sb.AppendLine("FPSet.Name,");
+                    sb.AppendLine("ID_DoseLevel,");
+                    sb.AppendLine("kvauto,");
+                    sb.AppendLine("OK1.Value,");
+                    sb.AppendLine("CharacteristicCurve,");
+                    sb.AppendLine("OK2.Value,");
+                    sb.AppendLine("Focus.Name,");
+                    sb.AppendLine("MaxPulseWidth,");
+                    sb.AppendLine("BlackeningCorrection,");
+                    if (ColumnExistInTable("Grid", "DFR_OGP"))
+                    {
+                        sb.AppendLine("Grid,");
+                    }
+                    else if (ColumnExistInTable("Grid", "OGP"))
+                    {
+                        sb.AppendLine("O2.Grid,");
+                    }
+
+                    sb.AppendLine("CollimationSizeY,");
+                    sb.AppendLine("CollimationSizeX,");
+                    sb.AppendLine("FilterType.Name,");
+                    sb.AppendLine("SingleShot,");
+                    sb.AppendLine("FixedFrameRate,");
+                    sb.AppendLine("AR1.Value,");
+                    sb.AppendLine("AR2.Value,");
+                    sb.AppendLine("AR3.Value,");
+                    sb.AppendLine("Autowindowing,");
+                    sb.AppendLine("WidthFactor,");
+                    sb.AppendLine("CenterShift,");
+                    sb.AppendLine("Bandwidth,");
+                    sb.AppendLine("Center,");
+                    sb.AppendLine("Width,");
+                    sb.AppendLine("SpatialFrequencyParameter.Name");
+                    sb.AppendLine("FROM((((((((((DFR_OGP");
+                    sb.AppendLine("left join OGP ON OGP.ID = DFR_OGP.ID)");
+                    sb.AppendLine("left join FPSet ON FPSet.ID = OGP.ID_FPSet)");
+                    sb.AppendLine("left join OGP_kV AS OK1 ON OK1.ID = OGP.ID_kV)");
+                    sb.AppendLine("left join OGP_kV AS OK2 ON OK2.ID = DFR_OGP.ID_DoseReduction)");
+                    sb.AppendLine("left join Focus ON Focus.ID = OGP.ID_Focus)");
+                    sb.AppendLine("left join OGP AS O2 ON O2.ID = DFR_OGP.ID)");
+                    sb.AppendLine("left join FilterType ON FilterType.ID = OGP.ID_FilterType)");
+                    sb.AppendLine("left join AcquisitionRate AS AR1 ON AR1.ID = DFR_OGP.ID_AcquisitionRate1)");
+                    sb.AppendLine("left join AcquisitionRate AS AR2 ON AR2.ID = DFR_OGP.ID_AcquisitionRate2)");
+                    sb.AppendLine("left join AcquisitionRate AS AR3 ON AR3.ID = DFR_OGP.ID_AcquisitionRate3)");
+                    sb.AppendLine("left join SpatialFrequencyParameter ON SpatialFrequencyParameter.ID = OGP.ID_ImaSpatialFreqParam");
                     break;
             }
 
@@ -331,6 +381,10 @@ namespace Pexel
                     m_organProgramsLabel.Text = "Spatial Frequency Parameters";
                     m_exportToExcelLabel.Text = "Export Spatial Frequency Parameters to Excel";
                     break;
+                case ViewType.DFR:
+                    m_organProgramsLabel.Text = "Digital Flouro Radiography";
+                    m_exportToExcelLabel.Text = "Export Digital Flouro Radiography to Excel";
+                    break;
             }
         }
         private void InitialPopulate()
@@ -339,6 +393,7 @@ namespace Pexel
 
             organParameterToolStripMenuItem.Checked = m_viewType == ViewType.OGP;
             spatialFrequencyParameterToolStripMenuItem.Checked = m_viewType == ViewType.SFP;
+            digitalFlouroRadiographyToolStripMenuItem.Checked = m_viewType == ViewType.DFR;
 
             SetupColumns(m_mainListView);
             SetupColumns(m_exportToExcelList);
@@ -349,9 +404,11 @@ namespace Pexel
             {
                 if (ConnectToMDBFile(mdbPath))
                 {
+                    SuspendRedraw(m_mainListView);
                     Populate();
-                    m_mainListView.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
                     m_mainListView.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+                    m_mainListView.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
+                    ResumeRedraw(m_mainListView);
                 }
                 else
                 {
@@ -360,6 +417,30 @@ namespace Pexel
                 }
             }
 
+        }
+
+        private const int WM_SETREDRAW = 0x000B;
+
+        public static void SuspendRedraw(Control control)
+        {
+            Message msgSuspendUpdate = Message.Create(control.Handle, WM_SETREDRAW, IntPtr.Zero,
+                IntPtr.Zero);
+
+            NativeWindow window = NativeWindow.FromHandle(control.Handle);
+            window.DefWndProc(ref msgSuspendUpdate);
+        }
+
+        public static void ResumeRedraw(Control control)
+        {
+            // Create a C "true" boolean as an IntPtr
+            IntPtr wparam = new IntPtr(1);
+            Message msgResumeUpdate = Message.Create(control.Handle, WM_SETREDRAW, wparam,
+                IntPtr.Zero);
+
+            NativeWindow window = NativeWindow.FromHandle(control.Handle);
+            window.DefWndProc(ref msgResumeUpdate);
+
+            control.Invalidate();
         }
         private void Populate()
         {
@@ -448,6 +529,34 @@ namespace Pexel
                     listView.Columns.Add("EG");
                     listView.Columns.Add("HK");
                     listView.Columns.Add("HG");
+                    break;
+                case ViewType.DFR:
+                    listView.Columns.Add("Namn");
+                    listView.Columns.Add("Flouro");
+                    listView.Columns.Add("Dos per puls");
+                    listView.Columns.Add("Auto kV");
+                    listView.Columns.Add("kV");
+                    listView.Columns.Add("C-Curve");
+                    listView.Columns.Add("Dos Reduction");
+                    listView.Columns.Add("Focus");
+                    listView.Columns.Add("Max Pulse Width");
+                    listView.Columns.Add("BC");
+                    listView.Columns.Add("Raster");
+                    listView.Columns.Add("Höjd");
+                    listView.Columns.Add("Bredd");
+                    listView.Columns.Add("Cufilter");
+                    listView.Columns.Add("Single");
+                    listView.Columns.Add("FixedFrameRate");
+                    listView.Columns.Add("FR1");
+                    listView.Columns.Add("FR2");
+                    listView.Columns.Add("FR3");
+                    listView.Columns.Add("Autowindowing");
+                    listView.Columns.Add("WF");
+                    listView.Columns.Add("CS");
+                    listView.Columns.Add("Bandwidth");
+                    listView.Columns.Add("WC");
+                    listView.Columns.Add("WW");
+                    listView.Columns.Add("SFP");
                     break;
             }
         }
@@ -551,6 +660,7 @@ namespace Pexel
 
         private void AddSelectItemToExcelExport()
         {
+            SuspendRedraw(m_exportToExcelList);
             foreach (int index in m_mainListView.SelectedIndices)
             {
                 ListViewItem newItem = ListItemFromPexRow(m_visibleRows[index]);
@@ -560,9 +670,10 @@ namespace Pexel
 
             if (m_exportToExcelList.Items.Count == 1)
             {
-                m_exportToExcelList.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
                 m_exportToExcelList.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+                m_exportToExcelList.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
             }
+            ResumeRedraw(m_exportToExcelList);
         }
         private void RemoveSelectItemFromExcelExport()
         {
@@ -613,6 +724,11 @@ namespace Pexel
 
         }
 
+        private void digitalFlouroRadiographyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            m_viewType = ViewType.DFR;
+            InitialPopulate();
+        }
         private void reloadToolStripMenuItem_Click(object sender, EventArgs e)
         {
             InitialPopulate();
@@ -624,5 +740,6 @@ namespace Pexel
 
             columnSetupForm.ShowDialog();
         }
+
     }
 }
