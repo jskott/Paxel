@@ -269,3 +269,61 @@ left join AcquisitionRate AS AR1 ON AR1.ID = DFR_OGP.ID_AcquisitionRate1)
 left join AcquisitionRate AS AR2 ON AR2.ID = DFR_OGP.ID_AcquisitionRate2)
 left join AcquisitionRate AS AR3 ON AR3.ID = DFR_OGP.ID_AcquisitionRate3)
 left join SpatialFrequencyParameter ON SpatialFrequencyParameter.ID = OGP.ID_ImaSpatialFreqParam
+
+
+
+SELECT
+FPSet.Name,
+FrameRate.Value,
+DoseLevel_FP.Value,
+DoseRateIndex,
+FluoroCurve.Name,
+FluoroFilterAuto,
+FilterType.Name,
+NoiseReduction.Value,
+ID_ImaSpatialFreqParam,
+WindowCenter,
+WindowWidth,
+Autowindowing,
+WidthFactor,
+CenterShift,
+Bandwidth,
+Default
+FROM (((((FluoroProgram
+inner join FPSet ON FPSet.ID = FluoroProgram.ID_FPSet)
+inner join DoseLevel_FP ON DoseLevel_FP.ID = FluoroProgram.ID_DoseLevel)
+inner join FluoroCurve ON FluoroCurve.ID = FluoroProgram.ID_FluoroCurve)
+inner join FilterType ON FilterType.ID = FluoroProgram.ID_FilterType)
+inner join NoiseReduction ON NoiseReduction.ID = FluoroProgram.ID_NoiseReduction)
+inner join FrameRate ON FrameRate.ID = FluoroProgram.ID_FrameRate
+
+
+SELECT
+Autowindowing,
+Bandwidth,
+CenterShift,
+ContinuousFluoro,
+Default,
+DoseRateIndex,
+FluoroFilterAuto,
+FluoroMode,
+Hash,
+DoseLevel_FP.Value,
+FilterType.Name,
+FluoroCurve.Name,
+FPSet.Name,
+FrameRate.Value,
+ID_ImaSpatialFreqParam,
+NoiseReduction.Value,
+MarkImage,
+PeakOpac,
+WidthFactor,
+WindowCenter,
+WindowWidth
+FROM (((((FluoroProgram
+inner join DoseLevel_FP ON DoseLevel_FP.ID = FluoroProgram.ID_DoseLevel)
+inner join FilterType ON FilterType.ID = FluoroProgram.ID_FilterType)
+inner join FluoroCurve ON FluoroCurve.ID = FluoroProgram.ID_FluoroCurve)
+inner join FPSet ON FPSet.ID = FluoroProgram.ID_FPSet)
+inner join FrameRate ON FrameRate.ID = FluoroProgram.ID_FrameRate)
+inner join NoiseReduction ON NoiseReduction.ID = FluoroProgram.ID_NoiseReduction

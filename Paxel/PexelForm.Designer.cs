@@ -37,6 +37,7 @@
             this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.organParameterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.spatialFrequencyParameterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.digitalFlouroRadiographyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.removeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -51,7 +52,7 @@
             this.m_exportToExcelLabel = new System.Windows.Forms.Label();
             this.m_exportToExcelList = new System.Windows.Forms.ListView();
             this.m_filterEdit = new System.Windows.Forms.TextBox();
-            this.digitalFlouroRadiographyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.flouroProgramToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.m_mainMain.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -103,7 +104,8 @@
             this.viewToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.organParameterToolStripMenuItem,
             this.spatialFrequencyParameterToolStripMenuItem,
-            this.digitalFlouroRadiographyToolStripMenuItem});
+            this.digitalFlouroRadiographyToolStripMenuItem,
+            this.flouroProgramToolStripMenuItem});
             this.viewToolStripMenuItem.Name = "viewToolStripMenuItem";
             this.viewToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.viewToolStripMenuItem.Text = "View";
@@ -123,6 +125,14 @@
             this.spatialFrequencyParameterToolStripMenuItem.Size = new System.Drawing.Size(265, 22);
             this.spatialFrequencyParameterToolStripMenuItem.Text = "Spatial Frequency Parameter";
             this.spatialFrequencyParameterToolStripMenuItem.Click += new System.EventHandler(this.spatialFrequencyParameterToolStripMenuItem_Click);
+            // 
+            // digitalFlouroRadiographyToolStripMenuItem
+            // 
+            this.digitalFlouroRadiographyToolStripMenuItem.Name = "digitalFlouroRadiographyToolStripMenuItem";
+            this.digitalFlouroRadiographyToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.D)));
+            this.digitalFlouroRadiographyToolStripMenuItem.Size = new System.Drawing.Size(265, 22);
+            this.digitalFlouroRadiographyToolStripMenuItem.Text = "Digital Flouro Radiography";
+            this.digitalFlouroRadiographyToolStripMenuItem.Click += new System.EventHandler(this.digitalFlouroRadiographyToolStripMenuItem_Click);
             // 
             // toolsToolStripMenuItem
             // 
@@ -254,13 +264,13 @@
             this.m_filterEdit.TextChanged += new System.EventHandler(this.OnFilterTextChanged);
             this.m_filterEdit.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnFilterKeyDown);
             // 
-            // digitalFlouroRadiographyToolStripMenuItem
+            // flouroProgramToolStripMenuItem
             // 
-            this.digitalFlouroRadiographyToolStripMenuItem.Name = "digitalFlouroRadiographyToolStripMenuItem";
-            this.digitalFlouroRadiographyToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.D)));
-            this.digitalFlouroRadiographyToolStripMenuItem.Size = new System.Drawing.Size(265, 22);
-            this.digitalFlouroRadiographyToolStripMenuItem.Text = "Digital Flouro Radiography";
-            this.digitalFlouroRadiographyToolStripMenuItem.Click += new System.EventHandler(this.digitalFlouroRadiographyToolStripMenuItem_Click);
+            this.flouroProgramToolStripMenuItem.Name = "flouroProgramToolStripMenuItem";
+            this.flouroProgramToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.F)));
+            this.flouroProgramToolStripMenuItem.Size = new System.Drawing.Size(265, 22);
+            this.flouroProgramToolStripMenuItem.Text = "Flouro Program";
+            this.flouroProgramToolStripMenuItem.Click += new System.EventHandler(this.flouroProgramToolStripMenuItem_Click);
             // 
             // PexelForm
             // 
@@ -311,6 +321,7 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator4;
         private System.Windows.Forms.ToolStripMenuItem columnConfiguratorToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem digitalFlouroRadiographyToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem flouroProgramToolStripMenuItem;
     }
 }
 

@@ -29,7 +29,8 @@ namespace Pexel
         {
             OGP,
             SFP,
-            DFR
+            DFR,
+            FP
         }
 
         public PexelForm()
@@ -191,6 +192,34 @@ namespace Pexel
                     sb.AppendLine("left join AcquisitionRate AS AR3 ON AR3.ID = DFR_OGP.ID_AcquisitionRate3)");
                     sb.AppendLine("left join SpatialFrequencyParameter ON SpatialFrequencyParameter.ID = OGP.ID_ImaSpatialFreqParam");
                     break;
+                case ViewType.FP:
+                    sb.AppendLine("SELECT");
+                    sb.AppendLine("FPSet.Name,");
+                    sb.AppendLine("FluoroMode,");
+                    sb.AppendLine("FrameRate.Value,");
+                    sb.AppendLine("DoseLevel_FP.Value,");
+                    sb.AppendLine("DoseRateIndex,");
+                    sb.AppendLine("FluoroCurve.Name,");
+                    sb.AppendLine("FluoroFilterAuto,");
+                    sb.AppendLine("FilterType.Name,");
+                    sb.AppendLine("NoiseReduction.Value,");
+                    sb.AppendLine("ID_ImaSpatialFreqParam,");
+                    sb.AppendLine("WindowCenter,");
+                    sb.AppendLine("WindowWidth,");
+                    sb.AppendLine("Autowindowing,");
+                    sb.AppendLine("WidthFactor,");
+                    sb.AppendLine("CenterShift,");
+                    sb.AppendLine("Bandwidth,");
+                    sb.AppendLine("Default");
+                    sb.AppendLine("FROM(((((FluoroProgram");
+                    sb.AppendLine("inner join FPSet ON FPSet.ID = FluoroProgram.ID_FPSet)");
+                    sb.AppendLine("inner join DoseLevel_FP ON DoseLevel_FP.ID = FluoroProgram.ID_DoseLevel)");
+                    sb.AppendLine("inner join FluoroCurve ON FluoroCurve.ID = FluoroProgram.ID_FluoroCurve)");
+                    sb.AppendLine("inner join FilterType ON FilterType.ID = FluoroProgram.ID_FilterType)");
+                    sb.AppendLine("inner join NoiseReduction ON NoiseReduction.ID = FluoroProgram.ID_NoiseReduction)");
+                    sb.AppendLine("inner join FrameRate ON FrameRate.ID = FluoroProgram.ID_FrameRate");
+                    break;
+
             }
 
 
@@ -385,6 +414,10 @@ namespace Pexel
                     m_organProgramsLabel.Text = "Digital Flouro Radiography";
                     m_exportToExcelLabel.Text = "Export Digital Flouro Radiography to Excel";
                     break;
+                case ViewType.FP:
+                    m_organProgramsLabel.Text = "Flouro Program";
+                    m_exportToExcelLabel.Text = "Export Flouro Program to Excel";
+                    break;
             }
         }
         private void InitialPopulate()
@@ -394,6 +427,7 @@ namespace Pexel
             organParameterToolStripMenuItem.Checked = m_viewType == ViewType.OGP;
             spatialFrequencyParameterToolStripMenuItem.Checked = m_viewType == ViewType.SFP;
             digitalFlouroRadiographyToolStripMenuItem.Checked = m_viewType == ViewType.DFR;
+            flouroProgramToolStripMenuItem.Checked = m_viewType == ViewType.FP;
 
             SetupColumns(m_mainListView);
             SetupColumns(m_exportToExcelList);
@@ -521,6 +555,7 @@ namespace Pexel
                     listView.Columns.Add("Raster");
                     listView.Columns.Add("Höjd");
                     listView.Columns.Add("Bredd");
+                    m_sorter = new PexTableComparer();
                     break;
                 case ViewType.SFP:
                     listView.Columns.Add("Namn");
@@ -529,6 +564,7 @@ namespace Pexel
                     listView.Columns.Add("EG");
                     listView.Columns.Add("HK");
                     listView.Columns.Add("HG");
+                    m_sorter = new PexTableComparer();
                     break;
                 case ViewType.DFR:
                     listView.Columns.Add("Namn");
@@ -557,12 +593,37 @@ namespace Pexel
                     listView.Columns.Add("WC");
                     listView.Columns.Add("WW");
                     listView.Columns.Add("SFP");
+                    m_sorter = new PexTableComparer();
+                    break;
+                case ViewType.FP:
+                    listView.Columns.Add("Namn");
+                    listView.Columns.Add("Mode");
+                    listView.Columns.Add("P/S");
+                    listView.Columns.Add("Dose Level");
+                    listView.Columns.Add("Dose Rate Index");
+                    listView.Columns.Add("Flouro Curve");
+                    listView.Columns.Add("Flouro Filter Auto");
+                    listView.Columns.Add("K Factor");
+                    listView.Columns.Add("SFP");
+                    listView.Columns.Add("WC");
+                    listView.Columns.Add("WW");
+                    listView.Columns.Add("Auto W");
+                    listView.Columns.Add("WF");
+                    listView.Columns.Add("CS");
+                    listView.Columns.Add("Bandwidth");
+                    m_sorter = new PexTableComparer();
+                    m_sorter.UpdateSortColumn(1, true);
+                    m_sorter.UpdateSortColumn(0, true);
                     break;
             }
         }
         private void OnFormLoad(object sender, EventArgs e)
         {
-            m_mainListView.ListViewItemSorter = new ListViewSorter();
+            List<int> initialSortColumn = new List<int>();
+            initialSortColumn.Add(0);
+            initialSortColumn.Add(1);
+
+            m_mainListView.ListViewItemSorter = new ListViewSorter(initialSortColumn);
             InitialPopulate();
         }
 
@@ -623,17 +684,17 @@ namespace Pexel
 
         private void OnColumnClick(object sender, ColumnClickEventArgs e)
         {
-
-            if (m_sorter.m_column == e.Column)
+            ColumnSorter column = m_sorter.CurrentSortColumn();
+               
+            if (column.Column == e.Column)
             {
-                m_sorter.m_ascending = !m_sorter.m_ascending;
+                column.Ascending = !column.Ascending;
             }
             else
             {
-                m_sorter.m_ascending = true;
+                m_sorter.UpdateSortColumn(e.Column, true);
             }
 
-            m_sorter.m_column = e.Column;
 
             m_visibleRows.Sort(m_sorter);
             m_pexTable.Sort(m_sorter);
@@ -741,5 +802,10 @@ namespace Pexel
             columnSetupForm.ShowDialog();
         }
 
+        private void flouroProgramToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            m_viewType = ViewType.FP;
+            InitialPopulate();
+        }
     }
 }

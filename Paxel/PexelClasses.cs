@@ -128,27 +128,62 @@ namespace Pexel
         }
     }
 
+    public class ColumnSorter
+    {
+        public ColumnSorter(int column, bool ascending = true)
+        {
+            Column = column;
+            Ascending = ascending;
+        }
+        public int Column { get; set; }
+        public bool Ascending { get; set; }
+    }
     public class PexTableComparer : IComparer<PexDataRow>
     {
-        public int m_column = 0;
-        public bool m_ascending = true;
+        private List<ColumnSorter> m_columns = new List<ColumnSorter>();
 
         private CaseInsensitiveComparer m_objectCompare;
         public PexTableComparer()
         {
-            m_column = 0;
+            m_columns.Add(new ColumnSorter(0));
 
             // Initialize the CaseInsensitiveComparer object
             m_objectCompare = new CaseInsensitiveComparer();
         }
 
+        public void UpdateSortColumn(int sortColumn, bool descending)
+        {
+            for(int i = 0; i < m_columns.Count; i++)
+            {
+                if(m_columns[i].Column == sortColumn)
+                {
+                    m_columns.RemoveAt(i);
+                    break;
+                }
+            }
+
+            m_columns.Insert(0, new ColumnSorter(sortColumn, descending));
+        }
+        public ColumnSorter CurrentSortColumn()
+        {
+            return m_columns[0];
+        }
         public int Compare(PexDataRow row1, PexDataRow row2)
         {
-            int compareResult;
+            int compareResult = 0;
 
-            compareResult = m_objectCompare.Compare(row1[m_column].DisplayName, row2[m_column].DisplayName);
+            foreach (ColumnSorter column in m_columns)
+            {
+                compareResult = m_objectCompare.Compare(row1[column.Column].DisplayName, row2[column.Column].DisplayName);
+                compareResult = column.Ascending ? compareResult : -compareResult;
 
-            return m_ascending ? compareResult : -compareResult;
+                if (compareResult != 0)
+                {
+                    break;
+                }
+            }
+
+            return compareResult;
         }
     }
 
