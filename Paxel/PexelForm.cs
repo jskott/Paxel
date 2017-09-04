@@ -611,6 +611,7 @@ namespace Pexel
                     listView.Columns.Add("WF");
                     listView.Columns.Add("CS");
                     listView.Columns.Add("Bandwidth");
+                    listView.Columns.Add("Default");
                     m_sorter = new PexTableComparer();
                     m_sorter.UpdateSortColumn(1, true);
                     m_sorter.UpdateSortColumn(0, true);
