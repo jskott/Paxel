@@ -10,7 +10,9 @@ namespace Pexel
     public class PexItem
     {
         public string DisplayName { get; set; }
-        public string Key { get; set; }
+        public string FilterKey { get; set; }
+
+        public object RawData { get; set; }
     }
 
     public class Relationship

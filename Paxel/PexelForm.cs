@@ -203,7 +203,7 @@ namespace Pexel
                     sb.AppendLine("FluoroFilterAuto,");
                     sb.AppendLine("FilterType.Name,");
                     sb.AppendLine("NoiseReduction.Value,");
-                    sb.AppendLine("ID_ImaSpatialFreqParam,");
+                    sb.AppendLine("SpatialFrequencyParameter.Name,");
                     sb.AppendLine("WindowCenter,");
                     sb.AppendLine("WindowWidth,");
                     sb.AppendLine("Autowindowing,");
@@ -211,13 +211,14 @@ namespace Pexel
                     sb.AppendLine("CenterShift,");
                     sb.AppendLine("Bandwidth,");
                     sb.AppendLine("Default");
-                    sb.AppendLine("FROM(((((FluoroProgram");
-                    sb.AppendLine("inner join FPSet ON FPSet.ID = FluoroProgram.ID_FPSet)");
-                    sb.AppendLine("inner join DoseLevel_FP ON DoseLevel_FP.ID = FluoroProgram.ID_DoseLevel)");
-                    sb.AppendLine("inner join FluoroCurve ON FluoroCurve.ID = FluoroProgram.ID_FluoroCurve)");
-                    sb.AppendLine("inner join FilterType ON FilterType.ID = FluoroProgram.ID_FilterType)");
-                    sb.AppendLine("inner join NoiseReduction ON NoiseReduction.ID = FluoroProgram.ID_NoiseReduction)");
-                    sb.AppendLine("inner join FrameRate ON FrameRate.ID = FluoroProgram.ID_FrameRate");
+                    sb.AppendLine("FROM((((((FluoroProgram");
+                    sb.AppendLine("left join FPSet ON FPSet.ID = FluoroProgram.ID_FPSet)");
+                    sb.AppendLine("left join DoseLevel_FP ON DoseLevel_FP.ID = FluoroProgram.ID_DoseLevel)");
+                    sb.AppendLine("left join FluoroCurve ON FluoroCurve.ID = FluoroProgram.ID_FluoroCurve)");
+                    sb.AppendLine("left join FilterType ON FilterType.ID = FluoroProgram.ID_FilterType)");
+                    sb.AppendLine("left join NoiseReduction ON NoiseReduction.ID = FluoroProgram.ID_NoiseReduction)");
+                    sb.AppendLine("left join FrameRate ON FrameRate.ID = FluoroProgram.ID_FrameRate)");
+                    sb.AppendLine("left join SpatialFrequencyParameter ON FluoroProgram.ID_ImaSpatialFreqParam = SpatialFrequencyParameter.ID");
                     break;
 
             }
@@ -332,12 +333,14 @@ namespace Pexel
                         PexDataRow row = new PexDataRow();
                         for (int i = 0; i < reader.FieldCount; i++)
                         {
-                            string value = reader[i].ToString();
+                            object value = reader[i];
+                            string stringValue = value.ToString();
 
                             PexItem item = new PexItem();
 
-                            item.DisplayName = value;
-                            item.Key = value.ToLower();
+                            item.DisplayName = stringValue.ToString();
+                            item.FilterKey = stringValue.ToLower();
+                            item.RawData = value;
 
                             row.Add(item);
                         }
@@ -367,7 +370,7 @@ namespace Pexel
 
                 foreach (PexItem value in row)
                 {
-                    if (regex.IsMatch(value.Key))
+                    if (regex.IsMatch(value.FilterKey))
                     {
                         ret = true;
                         break;
@@ -386,11 +389,14 @@ namespace Pexel
                 if (first)
                 {
                     listItem.Text = item.DisplayName;
+                    listItem.SubItems[0].Tag = item;
                     first = false;
                 }
                 else
                 {
-                    listItem.SubItems.Add(item.DisplayName);
+                    ListViewItem.ListViewSubItem subItem = listItem.SubItems.Add(item.DisplayName);
+
+                    subItem.Tag = item;
                 }
             }
             listItem.SubItems.Add("");
@@ -603,6 +609,7 @@ namespace Pexel
                     listView.Columns.Add("Dose Rate Index");
                     listView.Columns.Add("Flouro Curve");
                     listView.Columns.Add("Flouro Filter Auto");
+                    listView.Columns.Add("Cu");
                     listView.Columns.Add("K Factor");
                     listView.Columns.Add("SFP");
                     listView.Columns.Add("WC");
@@ -661,7 +668,9 @@ namespace Pexel
                 for (int j = 0; j < item.SubItems.Count; j++)
                 {
                     int column = j + 1;
-                    xlWorkSheet.Cells[row, column] = item.SubItems[j].Text;
+                    PexItem pexItem = item.SubItems[j].Tag as PexItem;
+
+                    xlWorkSheet.Cells[row, column] = pexItem != null ? pexItem.RawData : "";
 
                 }
             }
