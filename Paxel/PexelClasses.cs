@@ -7,6 +7,15 @@ using System.Threading.Tasks;
 
 namespace Pexel
 {
+    public enum ViewType
+    {
+        OGP,
+        SFP,
+        DFR,
+        FP,
+        SP
+    }
+
     public class PexItem
     {
         public string DisplayName { get; set; }
@@ -97,8 +106,10 @@ namespace Pexel
 
     public class TableByName : Dictionary<string, Table>
     { }
-
     public class PexDataRow : List<PexItem>
+    { }
+
+    public class NameByTypeAndIndex : Dictionary<ViewType, Dictionary<int, Func<object, object>>>
     { }
 
     public class PexTable : List<PexDataRow>
@@ -170,13 +181,25 @@ namespace Pexel
         {
             return m_columns[0];
         }
+        public object SafeValue(object obj)
+        {
+            if(obj == DBNull.Value)
+            {
+                obj = null;
+            }
+
+            return obj;
+        }
         public int Compare(PexDataRow row1, PexDataRow row2)
         {
             int compareResult = 0;
 
             foreach (ColumnSorter column in m_columns)
             {
-                compareResult = m_objectCompare.Compare(row1[column.Column].DisplayName, row2[column.Column].DisplayName);
+                object o1 = SafeValue(row1[column.Column].RawData);
+                object o2 = SafeValue(row2[column.Column].RawData);
+
+                compareResult = m_objectCompare.Compare(o1, o2);
                 compareResult = column.Ascending ? compareResult : -compareResult;
 
                 if (compareResult != 0)

@@ -25,13 +25,7 @@ namespace Pexel
         private ViewType m_viewType = ViewType.OGP;
         private TableByColumn m_tableByColumn = null;
         private TableByName m_tableByName = new TableByName();
-        enum ViewType
-        {
-            OGP,
-            SFP,
-            DFR,
-            FP
-        }
+        private NameByTypeAndIndex m_nameByTypeAndIndex = new NameByTypeAndIndex();
 
         public PexelForm()
         {
@@ -103,9 +97,16 @@ namespace Pexel
                     sb.AppendLine("    RAD_OGP.ImageAutoamplification,");
                     sb.AppendLine("    GradationParameter.Name,");
                     sb.AppendLine("    SpatialFrequencyParameter.Name,");
+                    sb.AppendLine("    EXI_Parameter.Name,");
+                    sb.AppendLine("    RAD_OGP.ImageWinAutowindowing,");
+                    sb.AppendLine("    ImageWinWidthFactor,");
+                    sb.AppendLine("    ImageWinCenterShift,");
                     sb.AppendLine("    RAD_OGP.ImageWinCenter,");
                     sb.AppendLine("    RAD_OGP.ImageWinWidth,");
-                    sb.AppendLine("    RAD_OGP.ImageWinAutowindowing,");
+                    sb.AppendLine("    OGP.ViewFlip1,");
+                    sb.AppendLine("    OGP.ViewFlip2,");
+                    sb.AppendLine("    ViewRotate,");
+
                     if (ColumnExistInTable("StandGrid", "RAD_OGP"))
                     {
                         sb.AppendLine("    RAD_OGP.StandGrid,");
@@ -115,8 +116,9 @@ namespace Pexel
                         sb.AppendLine("    OGP.Grid,");
                     }
                     sb.AppendLine("    RAD_OGP.StandShutter2,");
-                    sb.AppendLine("    RAD_OGP.StandShutter1");
-                    sb.AppendLine("FROM(((((((((((OGP");
+                    sb.AppendLine("    RAD_OGP.StandShutter1,");
+                    sb.AppendLine("    StandPosition.Name");
+                    sb.AppendLine("FROM(((((((((((((OGP");
                     sb.AppendLine("left join FPSet ON FPSet.ID = OGP.ID_FPSet)");
                     sb.AppendLine("left join RAD_OGP ON RAD_OGP.ID = OGP.ID)");
                     sb.AppendLine("left join Technique ON RAD_OGP.ID_Technique = Technique.ID)");
@@ -128,7 +130,9 @@ namespace Pexel
                     sb.AppendLine("left join FilterType ON OGP.ID_FilterType = FilterType.ID)");
                     sb.AppendLine("left join ImageAmplification ON RAD_OGP.ID_ImageAmplification = ImageAmplification.ID)");
                     sb.AppendLine("left join GradationParameter ON RAD_OGP.ID_ImageGradation = GradationParameter.IDs)");
-                    sb.AppendLine("left join SpatialFrequencyParameter ON OGP.ID_ImaSpatialFreqParam = SpatialFrequencyParameter.ID");
+                    sb.AppendLine("left join SpatialFrequencyParameter ON OGP.ID_ImaSpatialFreqParam = SpatialFrequencyParameter.ID)");
+                    sb.AppendLine("left join EXI_Parameter ON RAD_OGP.ID_EXI_Parameter = EXI_Parameter.ID)");
+                    sb.AppendLine("left join StandPosition ON OGP.ID_StandPosition = StandPosition.ID");
                     break;
                 case ViewType.SFP:
                     sb.AppendLine("SELECT");
@@ -220,6 +224,13 @@ namespace Pexel
                     sb.AppendLine("left join FrameRate ON FrameRate.ID = FluoroProgram.ID_FrameRate)");
                     sb.AppendLine("left join SpatialFrequencyParameter ON FluoroProgram.ID_ImaSpatialFreqParam = SpatialFrequencyParameter.ID");
                     break;
+                case ViewType.SP:
+                    sb.AppendLine("SELECT");
+                    sb.AppendLine("Name,");
+                    sb.AppendLine("Identifier");
+                    sb.AppendLine("FROM StandPosition");
+                    break;
+
 
             }
 
@@ -315,6 +326,61 @@ namespace Pexel
         {
             return m_tableByColumn.Exists(column, table);
         }
+        private object TransformRotation(object value)
+        {
+            int i = Convert.ToInt32(value);
+            switch (i)
+            {
+                case 1:
+                    value = 0;
+                    break;
+                case 2:
+                    value = 90;
+                    break;
+                case 3:
+                    value = 180;
+                    break;
+                case 4:
+                    value = 270;
+                    break;
+
+            }
+
+            return value;
+        }
+        object DefaultTransformer(object value)
+        {
+            return value;
+        }
+        private object TransformMAS(object value)
+        {
+            int i = Convert.ToInt32(value);
+            value = i / 100.0;
+
+            return value;
+        }
+        private object TransformKV(object value)
+        {
+            int i = Convert.ToInt32(value);
+            value = i / 10;
+
+            return value;
+        }
+        private object TransformIfApplicable(object value, int index)
+        {
+            if(value != DBNull.Value)
+            { 
+                if(value.GetType() == typeof(short))
+                {
+                    value = Convert.ToInt32(value);
+                }
+                Func<object, object> func = m_nameByTypeAndIndex[m_viewType][index];
+
+                value = func(value);
+            }
+
+            return value;
+        }
         private void TransformData(OleDbConnection connection)
         {
             if (ValidConnection(connection))
@@ -333,7 +399,7 @@ namespace Pexel
                         PexDataRow row = new PexDataRow();
                         for (int i = 0; i < reader.FieldCount; i++)
                         {
-                            object value = reader[i];
+                            object value = TransformIfApplicable(reader[i], i);
                             string stringValue = value.ToString();
 
                             PexItem item = new PexItem();
@@ -424,6 +490,10 @@ namespace Pexel
                     m_organProgramsLabel.Text = "Flouro Program";
                     m_exportToExcelLabel.Text = "Export Flouro Program to Excel";
                     break;
+                case ViewType.SP:
+                    m_organProgramsLabel.Text = "Stand Position";
+                    m_exportToExcelLabel.Text = "Export Stand Position to Excel";
+                    break;
             }
         }
         private void InitialPopulate()
@@ -434,6 +504,7 @@ namespace Pexel
             spatialFrequencyParameterToolStripMenuItem.Checked = m_viewType == ViewType.SFP;
             digitalFlouroRadiographyToolStripMenuItem.Checked = m_viewType == ViewType.DFR;
             flouroProgramToolStripMenuItem.Checked = m_viewType == ViewType.FP;
+            standPositionToolStripMenuItem.Checked = m_viewType == ViewType.SP;
 
             SetupColumns(m_mainListView);
             SetupColumns(m_exportToExcelList);
@@ -535,6 +606,18 @@ namespace Pexel
 
             return ret;
         }
+
+        void AddColumn(ViewType viewType, ListView listView, string name, Func<object, object> transformFunc = null)
+        {
+            if(!m_nameByTypeAndIndex.ContainsKey(viewType))
+            {
+                m_nameByTypeAndIndex[viewType] = new Dictionary<int, Func<object, object>>();
+            }
+
+            int index = listView.Columns.Count;
+            m_nameByTypeAndIndex[viewType][index] = transformFunc == null ? DefaultTransformer : transformFunc;
+            listView.Columns.Add(name);
+        }
         private void SetupColumns(ListView listView)
         {
             listView.Columns.Clear();
@@ -542,86 +625,106 @@ namespace Pexel
             switch (m_viewType)
             {
                 case ViewType.OGP:
-                    listView.Columns.Add("Namn");
-                    listView.Columns.Add("Flouro");
-                    listView.Columns.Add("Punkt");
-                    listView.Columns.Add("kV");
-                    listView.Columns.Add("mAs");
-                    listView.Columns.Add("ms");
-                    listView.Columns.Add("Dos");
-                    listView.Columns.Add("Fokus");
-                    listView.Columns.Add("Cu");
-                    listView.Columns.Add("Amp");
-                    listView.Columns.Add("Amp auto");
-                    listView.Columns.Add("LUT");
-                    listView.Columns.Add("SFP");
-                    listView.Columns.Add("WC");
-                    listView.Columns.Add("WW");
-                    listView.Columns.Add("Auto");
-                    listView.Columns.Add("Raster");
-                    listView.Columns.Add("Höjd");
-                    listView.Columns.Add("Bredd");
+                    AddColumn(m_viewType, listView, "Namn");
+                    AddColumn(m_viewType, listView, "Flouro");
+                    AddColumn(m_viewType, listView, "Punkt");
+                    AddColumn(m_viewType, listView, "kV", TransformKV);
+                    AddColumn(m_viewType, listView, "mAs", TransformMAS);
+                    AddColumn(m_viewType, listView, "ms");
+                    AddColumn(m_viewType, listView, "Dos");
+                    AddColumn(m_viewType, listView, "Fokus");
+                    AddColumn(m_viewType, listView, "Cu");
+                    AddColumn(m_viewType, listView, "Amp");
+                    AddColumn(m_viewType, listView, "Amp auto");
+                    AddColumn(m_viewType, listView, "LUT");
+                    AddColumn(m_viewType, listView, "SFP");
+                    AddColumn(m_viewType, listView, "EXI");
+
+                    AddColumn(m_viewType, listView, "Auto");
+
+                    AddColumn(m_viewType, listView, "WF");
+                    AddColumn(m_viewType, listView, "CS");
+
+                    AddColumn(m_viewType, listView, "WC");
+                    AddColumn(m_viewType, listView, "WW");
+
+                    AddColumn(m_viewType, listView, "Vertikal");
+                    AddColumn(m_viewType, listView, "Horisontell");
+                    AddColumn(m_viewType, listView, "Rotation", TransformRotation);
+
+                    AddColumn(m_viewType, listView, "Raster");
+                    AddColumn(m_viewType, listView, "Höjd");
+                    AddColumn(m_viewType, listView, "Bredd");
+                    AddColumn(m_viewType, listView, "Plats");
+
+
+
                     m_sorter = new PexTableComparer();
                     break;
                 case ViewType.SFP:
-                    listView.Columns.Add("Namn");
-                    listView.Columns.Add("DV");
-                    listView.Columns.Add("EK");
-                    listView.Columns.Add("EG");
-                    listView.Columns.Add("HK");
-                    listView.Columns.Add("HG");
+                    AddColumn(m_viewType, listView, "Namn");
+                    AddColumn(m_viewType, listView, "DV");
+                    AddColumn(m_viewType, listView, "EK");
+                    AddColumn(m_viewType, listView, "EG");
+                    AddColumn(m_viewType, listView, "HK");
+                    AddColumn(m_viewType, listView, "HG");
                     m_sorter = new PexTableComparer();
                     break;
                 case ViewType.DFR:
-                    listView.Columns.Add("Namn");
-                    listView.Columns.Add("Flouro");
-                    listView.Columns.Add("Dos per puls");
-                    listView.Columns.Add("Auto kV");
-                    listView.Columns.Add("kV");
-                    listView.Columns.Add("C-Curve");
-                    listView.Columns.Add("Dos Reduction");
-                    listView.Columns.Add("Focus");
-                    listView.Columns.Add("Max Pulse Width");
-                    listView.Columns.Add("BC");
-                    listView.Columns.Add("Raster");
-                    listView.Columns.Add("Höjd");
-                    listView.Columns.Add("Bredd");
-                    listView.Columns.Add("Cufilter");
-                    listView.Columns.Add("Single");
-                    listView.Columns.Add("FixedFrameRate");
-                    listView.Columns.Add("FR1");
-                    listView.Columns.Add("FR2");
-                    listView.Columns.Add("FR3");
-                    listView.Columns.Add("Autowindowing");
-                    listView.Columns.Add("WF");
-                    listView.Columns.Add("CS");
-                    listView.Columns.Add("Bandwidth");
-                    listView.Columns.Add("WC");
-                    listView.Columns.Add("WW");
-                    listView.Columns.Add("SFP");
+                    AddColumn(m_viewType, listView, "Namn");
+                    AddColumn(m_viewType, listView, "Flouro");
+                    AddColumn(m_viewType, listView, "Dos per puls");
+                    AddColumn(m_viewType, listView, "Auto kV");
+                    AddColumn(m_viewType, listView, "kV", TransformRotation);
+                    AddColumn(m_viewType, listView, "C-Curve");
+                    AddColumn(m_viewType, listView, "Dos Reduction");
+                    AddColumn(m_viewType, listView, "Focus");
+                    AddColumn(m_viewType, listView, "Max Pulse Width");
+                    AddColumn(m_viewType, listView, "BC");
+                    AddColumn(m_viewType, listView, "Raster");
+                    AddColumn(m_viewType, listView, "Höjd");
+                    AddColumn(m_viewType, listView, "Bredd");
+                    AddColumn(m_viewType, listView, "Cufilter");
+                    AddColumn(m_viewType, listView, "Single");
+                    AddColumn(m_viewType, listView, "FixedFrameRate");
+                    AddColumn(m_viewType, listView, "FR1");
+                    AddColumn(m_viewType, listView, "FR2");
+                    AddColumn(m_viewType, listView, "FR3");
+                    AddColumn(m_viewType, listView, "Autowindowing");
+                    AddColumn(m_viewType, listView, "WF");
+                    AddColumn(m_viewType, listView, "CS");
+                    AddColumn(m_viewType, listView, "Bandwidth");
+                    AddColumn(m_viewType, listView, "WC");
+                    AddColumn(m_viewType, listView, "WW");
+                    AddColumn(m_viewType, listView, "SFP");
                     m_sorter = new PexTableComparer();
                     break;
                 case ViewType.FP:
-                    listView.Columns.Add("Namn");
-                    listView.Columns.Add("Mode");
-                    listView.Columns.Add("P/S");
-                    listView.Columns.Add("Dose Level");
-                    listView.Columns.Add("Dose Rate Index");
-                    listView.Columns.Add("Flouro Curve");
-                    listView.Columns.Add("Flouro Filter Auto");
-                    listView.Columns.Add("Cu");
-                    listView.Columns.Add("K Factor");
-                    listView.Columns.Add("SFP");
-                    listView.Columns.Add("WC");
-                    listView.Columns.Add("WW");
-                    listView.Columns.Add("Auto W");
-                    listView.Columns.Add("WF");
-                    listView.Columns.Add("CS");
-                    listView.Columns.Add("Bandwidth");
-                    listView.Columns.Add("Default");
+                    AddColumn(m_viewType, listView, "Namn");
+                    AddColumn(m_viewType, listView, "Mode");
+                    AddColumn(m_viewType, listView, "P/S");
+                    AddColumn(m_viewType, listView, "Dose Level");
+                    AddColumn(m_viewType, listView, "Dose Rate Index");
+                    AddColumn(m_viewType, listView, "Flouro Curve");
+                    AddColumn(m_viewType, listView, "Flouro Filter Auto");
+                    AddColumn(m_viewType, listView, "Cu");
+                    AddColumn(m_viewType, listView, "K Factor");
+                    AddColumn(m_viewType, listView, "SFP");
+                    AddColumn(m_viewType, listView, "WC");
+                    AddColumn(m_viewType, listView, "WW");
+                    AddColumn(m_viewType, listView, "Auto W");
+                    AddColumn(m_viewType, listView, "WF");
+                    AddColumn(m_viewType, listView, "CS");
+                    AddColumn(m_viewType, listView, "Bandwidth");
+                    AddColumn(m_viewType, listView, "Default");
                     m_sorter = new PexTableComparer();
                     m_sorter.UpdateSortColumn(1, true);
                     m_sorter.UpdateSortColumn(0, true);
+                    break;
+                case ViewType.SP:
+                    AddColumn(m_viewType, listView, "Namn");
+                    AddColumn(m_viewType, listView, "Identifier");
+
                     break;
             }
         }
@@ -815,6 +918,12 @@ namespace Pexel
         private void flouroProgramToolStripMenuItem_Click(object sender, EventArgs e)
         {
             m_viewType = ViewType.FP;
+            InitialPopulate();
+        }
+
+        private void standPositionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            m_viewType = ViewType.SP;
             InitialPopulate();
         }
     }
