@@ -14,6 +14,7 @@ using Excel = Microsoft.Office.Interop.Excel;
 using System.Text.RegularExpressions;
 using System.Collections;
 using System.Collections.Specialized;
+using System.Data.SQLite;
 
 namespace Pexel
 {
@@ -35,7 +36,7 @@ namespace Pexel
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
             OpenFileDialog dlg = new OpenFileDialog();
-            dlg.Filter = "Log files (*.mdb)|*.mdb|All files (*.*)|*.*";
+            dlg.Filter = "Database file (*.mdb;*.sqlite)|*.mdb;*.sqlite|All files (*.*)|*.*";
             dlg.FilterIndex = 1;
 
             if (dlg.ShowDialog() == DialogResult.OK)
@@ -75,7 +76,10 @@ namespace Pexel
         {
             return connection != null && connection.State == ConnectionState.Open;
         }
-
+        private bool ValidConnection(SQLiteConnection connection)
+        {
+            return connection != null && connection.State == ConnectionState.Open;
+        }
         private string GetSqlCommand()
         {
             StringBuilder sb = new StringBuilder();
@@ -93,7 +97,14 @@ namespace Pexel
                     sb.AppendLine("    Dose_Rad.Dose,");
                     sb.AppendLine("    Focus.Name,");
                     sb.AppendLine("    FilterType.Name,");
-                    sb.AppendLine("    ImageAmplification.Value,");
+                    if (ColumnExistInTable("ImageAmplification", "RAD_OGP"))
+                    {
+                        sb.AppendLine("    ImageAmplification,");
+                    }
+                    else if (ColumnExistInTable("Grid", "OGP"))
+                    {
+                        sb.AppendLine("    ImageAmplification.Value,");
+                    }
                     sb.AppendLine("    RAD_OGP.ImageAutoamplification,");
                     sb.AppendLine("    GradationParameter.Name,");
                     sb.AppendLine("    SpatialFrequencyParameter.Name,");
@@ -118,7 +129,12 @@ namespace Pexel
                     sb.AppendLine("    RAD_OGP.StandShutter2,");
                     sb.AppendLine("    RAD_OGP.StandShutter1,");
                     sb.AppendLine("    StandPosition.Name");
-                    sb.AppendLine("FROM(((((((((((((OGP");
+                    sb.AppendLine("FROM((((((((((((");
+                    if (!ColumnExistInTable("ImageAmplification", "RAD_OGP"))
+                    {
+                        sb.Append("(");
+                    }
+                    sb.AppendLine("OGP");
                     sb.AppendLine("left join FPSet ON FPSet.ID = OGP.ID_FPSet)");
                     sb.AppendLine("left join RAD_OGP ON RAD_OGP.ID = OGP.ID)");
                     sb.AppendLine("left join Technique ON RAD_OGP.ID_Technique = Technique.ID)");
@@ -128,7 +144,10 @@ namespace Pexel
                     sb.AppendLine("left join Dose_Rad ON RAD_OGP.ID_Dose = Dose_Rad.ID)");
                     sb.AppendLine("left join Focus ON OGP.ID_Focus = Focus.ID)");
                     sb.AppendLine("left join FilterType ON OGP.ID_FilterType = FilterType.ID)");
-                    sb.AppendLine("left join ImageAmplification ON RAD_OGP.ID_ImageAmplification = ImageAmplification.ID)");
+                    if (!ColumnExistInTable("ImageAmplification", "RAD_OGP"))
+                    {
+                        sb.AppendLine("left join ImageAmplification ON RAD_OGP.ID_ImageAmplification = ImageAmplification.ID)");
+                    }
                     sb.AppendLine("left join GradationParameter ON RAD_OGP.ID_ImageGradation = GradationParameter.IDs)");
                     sb.AppendLine("left join SpatialFrequencyParameter ON OGP.ID_ImaSpatialFreqParam = SpatialFrequencyParameter.ID)");
                     sb.AppendLine("left join EXI_Parameter ON RAD_OGP.ID_EXI_Parameter = EXI_Parameter.ID)");
@@ -238,6 +257,40 @@ namespace Pexel
             return sb.ToString();
         }
 
+        private void PopulateTablesByColumn(SQLiteConnection connection)
+        {
+            m_tableByColumn = new TableByColumn();
+            using (DataTable tableschema = connection.GetSchema("COLUMNS"))
+            {
+                // first column name
+                foreach (DataRow row in tableschema.Rows)
+                {
+                    string tableName = row["TABLE_NAME"].ToString();
+                    string columnName = row["COLUMN_NAME"].ToString();
+
+
+                    if (!m_tableByColumn.ContainsKey(columnName))
+                    {
+                        m_tableByColumn[columnName] = new StringSet();
+                    }
+
+                    m_tableByColumn[columnName].Add(tableName);
+
+                    Table table = null;
+                    if (!m_tableByName.TryGetValue(tableName, out table))
+                    {
+                        table = new Table();
+                        table.Name = tableName;
+                        m_tableByName[tableName] = table;
+                    }
+
+                    table.Columns.Add(columnName);
+                }
+            }
+
+            //PopulateForeignKeys(connection);
+
+        }
         private void PopulateTablesByColumn(OleDbConnection connection)
         {
             m_tableByColumn = new TableByColumn();
@@ -272,6 +325,40 @@ namespace Pexel
             PopulateForeignKeys(connection);
 
         }
+        private void PopulateForeignKeys(SQLiteConnection connection)
+        {
+            String[] restrictions = new string[] { null };
+            DataTable schema;
+            // Open the schema information for the foreign keys.
+            schema = connection.GetSchema("ForeignKeys", restrictions);
+            // Enumerate the table's foreign keys.
+            foreach (DataRow row in schema.Rows)
+            {
+                string fkTableName = row["FK_TABLE_NAME"].ToString();
+                string fkColumnName = row["FK_COLUMN_NAME"].ToString();
+                string pkTableName = row["PK_TABLE_NAME"].ToString();
+                string pkColumnName = row["PK_COLUMN_NAME"].ToString();
+
+                Relationship relationship = new Relationship();
+
+                relationship.ForeignKey = fkColumnName;
+                Table table = null;
+                if (m_tableByName.TryGetValue(fkTableName, out table))
+                {
+                    relationship.ForeignTable = table;
+                }
+                if (m_tableByName.TryGetValue(pkTableName, out table))
+                {
+                    relationship.PrimaryTable = table;
+                }
+                relationship.PrimaryKey = pkColumnName;
+
+                if (relationship.ForeignTable != null && relationship.PrimaryTable != null)
+                {
+                    relationship.ForeignTable.Relations.Add(relationship);
+                }
+            }
+        }
         // Retrieve the list of a table's foreign keys.
         private void PopulateForeignKeys(OleDbConnection connection)
         {
@@ -305,21 +392,7 @@ namespace Pexel
                 {
                     relationship.ForeignTable.Relations.Add(relationship);
                 }
-
-                //Console.WriteLine(row["FK_TABLE_NAME"].ToString() + ":" + row["FK_COLUMN_NAME"].ToString() + " --> " + row["PK_TABLE_NAME"].ToString() + ":" + row["PK_COLUMN_NAME"].ToString() + " " + row["FK_NAME"].ToString());
             }
-
-            /*
-            foreach (Table table in m_tableByName.Values)
-            {
-                Console.WriteLine(table.Name);
-
-                foreach (string column in table.FlatColumns())
-                {
-                    Console.WriteLine("\t" + column);
-                }
-            }
-            */
         }
 
         private bool ColumnExistInTable(string column, string table)
@@ -381,6 +454,52 @@ namespace Pexel
 
             return value;
         }
+        private void TransformData(SQLiteConnection connection)
+        {
+            if (ValidConnection(connection))
+            {
+                PopulateTablesByColumn(connection);
+                SQLiteCommand sqliteCommand = connection.CreateCommand();
+                sqliteCommand.CommandText = GetSqlCommand();
+
+                try
+                {
+
+                    SQLiteDataReader reader = sqliteCommand.ExecuteReader();
+
+                    m_pexTable = new PexTable();
+
+                    while (reader.Read())
+                    {
+                        PexDataRow row = new PexDataRow();
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            object value = TransformIfApplicable(reader[i], i);
+                            string stringValue = value.ToString();
+
+                            PexItem item = new PexItem();
+
+                            item.DisplayName = stringValue.ToString();
+                            item.FilterKey = stringValue.ToLower();
+                            item.RawData = value;
+
+                            row.Add(item);
+                        }
+                        m_pexTable.Add(row);
+                    }
+
+                    m_pexTable.Sort(m_sorter);
+
+                    // Call Close when done reading.
+                    reader.Close();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+            }
+        }
+
         private void TransformData(OleDbConnection connection)
         {
             if (ValidConnection(connection))
@@ -509,11 +628,23 @@ namespace Pexel
             SetupColumns(m_mainListView);
             SetupColumns(m_exportToExcelList);
 
-            string mdbPath = Properties.Settings.Default.LastMDBPath;
+            string path = Properties.Settings.Default.LastMDBPath;
 
-            if (mdbPath.Length > 0)
+            if (path.Length > 0)
             {
-                if (ConnectToMDBFile(mdbPath))
+                string extension = Path.GetExtension(path);
+
+                bool ok = false;
+
+                if(extension == ".mdb")
+                {
+                    ok = ConnectToMDBFile(path);
+                }
+                else if(extension == ".sqlite")
+                {
+                    ok = ConnectToSQLiteFile(path);
+                }
+                if (ok)
                 {
                     SuspendRedraw(m_mainListView);
                     Populate();
@@ -566,6 +697,43 @@ namespace Pexel
 
             m_mainListView.VirtualListSize = m_visibleRows.Count;
 
+        }
+        private bool ConnectToSQLiteFile(string path)
+        {
+            bool ret = false;
+            if (File.Exists(path))
+            {
+                StringBuilder sb = new StringBuilder();
+
+                sb.Append(@"Data Source=");
+                sb.Append(path);
+
+                string connectString = sb.ToString();
+
+
+                SQLiteConnection connection = new SQLiteConnection(connectString);
+
+
+                try
+                {
+                    connection.Open();
+                    TransformData(connection);
+                    connection.Close();
+
+                    Properties.Settings.Default.LastMDBPath = path;
+                    Properties.Settings.Default.Save();
+                    Text = "Pexcel - PEX to Excel - " + path;
+
+                    ret = true;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+            }
+
+
+            return ret;
         }
 
         private bool ConnectToMDBFile(string path)
