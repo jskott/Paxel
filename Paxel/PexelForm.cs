@@ -198,7 +198,10 @@ namespace Pexel
                     sb.AppendLine("Autowindowing,");
                     sb.AppendLine("WidthFactor,");
                     sb.AppendLine("CenterShift,");
-                    sb.AppendLine("Bandwidth,");
+                    if (ColumnExistInTable("Bandwidth", "DFR_OGP"))
+                    {
+                        sb.AppendLine("Bandwidth,");
+                    }
                     sb.AppendLine("Center,");
                     sb.AppendLine("Width,");
                     sb.AppendLine("SpatialFrequencyParameter.Name");
@@ -233,7 +236,14 @@ namespace Pexel
                     sb.AppendLine("WidthFactor,");
                     sb.AppendLine("CenterShift,");
                     sb.AppendLine("Bandwidth,");
-                    sb.AppendLine("Default");
+                    if (ColumnExistInTable("Default", "FluoroProgram"))
+                    {
+                        sb.AppendLine("Default");
+                    }
+                    else if (ColumnExistInTable("IsDefault", "FluoroProgram"))
+                    {
+                        sb.AppendLine("IsDefault");
+                    }
                     sb.AppendLine("FROM((((((FluoroProgram");
                     sb.AppendLine("left join FPSet ON FPSet.ID = FluoroProgram.ID_FPSet)");
                     sb.AppendLine("left join DoseLevel_FP ON DoseLevel_FP.ID = FluoroProgram.ID_DoseLevel)");
@@ -861,7 +871,10 @@ namespace Pexel
                     AddColumn(m_viewType, listView, "Autowindowing");
                     AddColumn(m_viewType, listView, "WF");
                     AddColumn(m_viewType, listView, "CS");
+                    if (ColumnExistInTable("Bandwidth", "DFR_OGP"))
+                    {
                     AddColumn(m_viewType, listView, "Bandwidth");
+                    }
                     AddColumn(m_viewType, listView, "WC");
                     AddColumn(m_viewType, listView, "WW");
                     AddColumn(m_viewType, listView, "SFP");
