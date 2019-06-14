@@ -101,7 +101,7 @@ namespace Pexel
                     {
                         sb.AppendLine("    ImageAmplification,");
                     }
-                    else if (ColumnExistInTable("Grid", "OGP"))
+                    else if (ColumnExistInTable("Value", "ImageAmplification"))
                     {
                         sb.AppendLine("    ImageAmplification.Value,");
                     }
