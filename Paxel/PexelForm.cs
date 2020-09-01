@@ -92,8 +92,22 @@ namespace Pexel
                     sb.AppendLine("    FPSet.Name,");
                     sb.AppendLine("    Technique.Value,");
                     sb.AppendLine("    OGP_kV.Value,");
-                    sb.AppendLine("    RADOGP_mAs.Value,");
-                    sb.AppendLine("    RADOGP_ms.Value,");
+                    if(TableExist("RADOGP_mAs"))
+                    {
+                        sb.AppendLine("    RADOGP_mAs.Value,");
+                    }
+                    else
+                    {
+                        sb.AppendLine("    OGP_mAs.Value,");
+                    }
+                    if (TableExist("RADOGP_ms"))
+                    {
+                        sb.AppendLine("    RADOGP_ms.Value,");
+                    }
+                    else
+                    {
+                        sb.AppendLine("    OGP_ms.Value,");
+                    }
                     sb.AppendLine("    Dose_Rad.Dose,");
                     sb.AppendLine("    Focus.Name,");
                     sb.AppendLine("    FilterType.Name,");
@@ -139,8 +153,23 @@ namespace Pexel
                     sb.AppendLine("left join RAD_OGP ON RAD_OGP.ID = OGP.ID)");
                     sb.AppendLine("left join Technique ON RAD_OGP.ID_Technique = Technique.ID)");
                     sb.AppendLine("left join OGP_kV ON OGP.ID_kV = OGP_kV.ID)");
-                    sb.AppendLine("left join RADOGP_mAs ON RAD_OGP.ID_mAs = RADOGP_mAs.ID)");
-                    sb.AppendLine("left join RADOGP_ms ON RAD_OGP.ID_ms = RADOGP_ms.ID)");
+                    if (TableExist("RADOGP_mAs"))
+                    {
+                        sb.AppendLine("left join RADOGP_mAs ON RAD_OGP.ID_mAs = RADOGP_mAs.ID)");
+                    }
+                    else
+                    {
+                        sb.AppendLine("left join OGP_mAs ON RAD_OGP.ID_mAs = OGP_mAs.ID)");
+                    }
+                    if(TableExist("RADOGP_ms"))
+                    {
+                        sb.AppendLine("left join RADOGP_ms ON RAD_OGP.ID_ms = RADOGP_ms.ID)");
+                    }
+                    else
+                    {
+                        sb.AppendLine("left join OGP_ms ON RAD_OGP.ID_ms = OGP_ms.ID)");
+                    }
+  
                     sb.AppendLine("left join Dose_Rad ON RAD_OGP.ID_Dose = Dose_Rad.ID)");
                     sb.AppendLine("left join Focus ON OGP.ID_Focus = Focus.ID)");
                     sb.AppendLine("left join FilterType ON OGP.ID_FilterType = FilterType.ID)");
@@ -270,6 +299,7 @@ namespace Pexel
         private void PopulateTablesByColumn(SQLiteConnection connection)
         {
             m_tableByColumn = new TableByColumn();
+            m_tableByName = new TableByName();
             using (DataTable tableschema = connection.GetSchema("COLUMNS"))
             {
                 // first column name
@@ -408,6 +438,10 @@ namespace Pexel
         private bool ColumnExistInTable(string column, string table)
         {
             return m_tableByColumn.Exists(column, table);
+        }
+        private bool TableExist(string column)
+        {
+            return m_tableByName.ContainsKey(column);
         }
         private object TransformRotation(object value)
         {

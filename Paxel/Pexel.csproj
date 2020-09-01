@@ -79,6 +79,13 @@
     <Compile Include="ColumnSetupForm.Designer.cs">
       <DependentUpon>ColumnSetupForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="ConvertPexelDatabase.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ConvertPexelDatabase.Designer.cs">
+      <DependentUpon>ConvertPexelDatabase.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DefaultPexelStorage.cs" />
     <Compile Include="ListViewSorter.cs" />
     <Compile Include="PexelClasses.cs" />
     <Compile Include="PexelForm.cs">
@@ -87,10 +94,14 @@
     <Compile Include="PexelForm.Designer.cs">
       <DependentUpon>PexelForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="PexelStorage.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="ColumnSetupForm.resx">
       <DependentUpon>ColumnSetupForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ConvertPexelDatabase.resx">
+      <DependentUpon>ConvertPexelDatabase.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="PexelForm.resx">
       <DependentUpon>PexelForm.cs</DependentUpon>

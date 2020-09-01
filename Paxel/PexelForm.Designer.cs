@@ -39,21 +39,19 @@
             this.spatialFrequencyParameterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.digitalFlouroRadiographyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.flouroProgramToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.standPositionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.removeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.exportToExcelToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
-            this.columnConfiguratorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
             this.reloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.m_mainListView = new Pexel.PexelForm.FlickerFreeListView();
             this.m_organProgramsLabel = new System.Windows.Forms.Label();
             this.m_exportToExcelLabel = new System.Windows.Forms.Label();
             this.m_exportToExcelList = new System.Windows.Forms.ListView();
             this.m_filterEdit = new System.Windows.Forms.TextBox();
-            this.standPositionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.m_mainMain.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -144,6 +142,14 @@
             this.flouroProgramToolStripMenuItem.Text = "Flouro Program";
             this.flouroProgramToolStripMenuItem.Click += new System.EventHandler(this.flouroProgramToolStripMenuItem_Click);
             // 
+            // standPositionToolStripMenuItem
+            // 
+            this.standPositionToolStripMenuItem.Name = "standPositionToolStripMenuItem";
+            this.standPositionToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.I)));
+            this.standPositionToolStripMenuItem.Size = new System.Drawing.Size(265, 22);
+            this.standPositionToolStripMenuItem.Text = "Stand Position";
+            this.standPositionToolStripMenuItem.Click += new System.EventHandler(this.standPositionToolStripMenuItem_Click);
+            // 
             // toolsToolStripMenuItem
             // 
             this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -152,8 +158,6 @@
             this.toolStripSeparator2,
             this.exportToExcelToolStripMenuItem,
             this.toolStripSeparator3,
-            this.columnConfiguratorToolStripMenuItem,
-            this.toolStripSeparator4,
             this.reloadToolStripMenuItem});
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
@@ -163,7 +167,7 @@
             // 
             this.addToolStripMenuItem.Name = "addToolStripMenuItem";
             this.addToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.I)));
-            this.addToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.addToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
             this.addToolStripMenuItem.Text = "Add";
             this.addToolStripMenuItem.Click += new System.EventHandler(this.addToolStripMenuItem_Click);
             // 
@@ -171,46 +175,33 @@
             // 
             this.removeToolStripMenuItem.Name = "removeToolStripMenuItem";
             this.removeToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.D)));
-            this.removeToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.removeToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
             this.removeToolStripMenuItem.Text = "Remove";
             this.removeToolStripMenuItem.Click += new System.EventHandler(this.removeToolStripMenuItem_Click);
             // 
             // toolStripSeparator2
             // 
             this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(225, 6);
+            this.toolStripSeparator2.Size = new System.Drawing.Size(187, 6);
             // 
             // exportToExcelToolStripMenuItem
             // 
             this.exportToExcelToolStripMenuItem.Name = "exportToExcelToolStripMenuItem";
             this.exportToExcelToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.E)));
-            this.exportToExcelToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.exportToExcelToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
             this.exportToExcelToolStripMenuItem.Text = "Export to Excel";
             this.exportToExcelToolStripMenuItem.Click += new System.EventHandler(this.exportToExcelToolStripMenuItem_Click);
             // 
             // toolStripSeparator3
             // 
             this.toolStripSeparator3.Name = "toolStripSeparator3";
-            this.toolStripSeparator3.Size = new System.Drawing.Size(225, 6);
-            // 
-            // columnConfiguratorToolStripMenuItem
-            // 
-            this.columnConfiguratorToolStripMenuItem.Name = "columnConfiguratorToolStripMenuItem";
-            this.columnConfiguratorToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.L)));
-            this.columnConfiguratorToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
-            this.columnConfiguratorToolStripMenuItem.Text = "Column Configurator";
-            this.columnConfiguratorToolStripMenuItem.Click += new System.EventHandler(this.columnConfiguratorToolStripMenuItem_Click);
-            // 
-            // toolStripSeparator4
-            // 
-            this.toolStripSeparator4.Name = "toolStripSeparator4";
-            this.toolStripSeparator4.Size = new System.Drawing.Size(225, 6);
+            this.toolStripSeparator3.Size = new System.Drawing.Size(187, 6);
             // 
             // reloadToolStripMenuItem
             // 
             this.reloadToolStripMenuItem.Name = "reloadToolStripMenuItem";
             this.reloadToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.R)));
-            this.reloadToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.reloadToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
             this.reloadToolStripMenuItem.Text = "Reload";
             this.reloadToolStripMenuItem.Click += new System.EventHandler(this.reloadToolStripMenuItem_Click);
             // 
@@ -274,14 +265,6 @@
             this.m_filterEdit.TextChanged += new System.EventHandler(this.OnFilterTextChanged);
             this.m_filterEdit.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnFilterKeyDown);
             // 
-            // standPositionToolStripMenuItem
-            // 
-            this.standPositionToolStripMenuItem.Name = "standPositionToolStripMenuItem";
-            this.standPositionToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.I)));
-            this.standPositionToolStripMenuItem.Size = new System.Drawing.Size(265, 22);
-            this.standPositionToolStripMenuItem.Text = "Stand Position";
-            this.standPositionToolStripMenuItem.Click += new System.EventHandler(this.standPositionToolStripMenuItem_Click);
-            // 
             // PexelForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -328,8 +311,6 @@
         private System.Windows.Forms.ToolStripMenuItem spatialFrequencyParameterToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
         private System.Windows.Forms.ToolStripMenuItem reloadToolStripMenuItem;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator4;
-        private System.Windows.Forms.ToolStripMenuItem columnConfiguratorToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem digitalFlouroRadiographyToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem flouroProgramToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem standPositionToolStripMenuItem;
